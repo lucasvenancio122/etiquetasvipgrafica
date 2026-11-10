@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Etiquetas escolares | Vip Gráfica</title>
+<meta name="description" content="Etiquetas escolares em vinil resistente à água: escolha o modelo da cartela, o tema e finalize pelo WhatsApp." />
+<meta name="theme-color" content="#101C3F" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" />
+<style>
+  :root {
+    --bg: #F3F7FF; --panel: #FFFFFF; --ink: #101C3F; --ink-2: #3B4560; --line: #E1E7F3; --grey: #6B7385;
+    --brand: #E5332B; --brand-dark: #C42A23; --ok: #1FA855; --ok-dark: #168044;
+    --display: "Rowdies", "Inter", system-ui, sans-serif;
+    --radius: 16px; --shadow: 0 1px 2px rgba(16,28,63,.05), 0 8px 24px rgba(16,28,63,.07);
+    --shadow-hover: 0 2px 4px rgba(16,28,63,.06), 0 18px 38px rgba(16,28,63,.15);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #FFFFFF 0, #EFF4FF 480px, #E9F1FE 100%); color: var(--ink); font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  img { max-width: 100%; display: block; }
+  .oculta { display: none !important; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 18px; }
+  :focus-visible { outline: 3px solid rgba(229,51,43,.5); outline-offset: 2px; }
+
+  header.top { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,.94); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 3px solid var(--brand); }
+  .top-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .logo-link { display: flex; align-items: center; min-width: 0; flex: 1; text-decoration: none; color: inherit; }
+  .logo-link img { height: 54px; width: auto; max-width: 180px; object-fit: contain; }
+  .logo-link .nome-txt { font-family: var(--display); font-size: 20px; font-weight: 700; white-space: nowrap; }
+  .btn-top { border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 14px; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
+  .btn-top:hover { background: var(--ink); color: #fff; }
+  .pedido-btn { display: flex; align-items: center; gap: 8px; background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; font-size: 14px; }
+  .pedido-btn .count { background: var(--brand); border-radius: 999px; min-width: 22px; height: 22px; padding: 0 6px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+  @media (max-width: 640px) { .btn-top { padding: 8px 10px; font-size: 12.5px; } .pedido-btn { padding: 8px 12px; font-size: 13px; } .logo-link img { height: 46px; max-width: 120px; } }
+
+  .hero { margin-top: 22px; background: linear-gradient(120deg, #101C3F, #1D2F66); border-radius: var(--radius); color: #fff; padding: 26px 28px; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; right: -50px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: var(--brand); opacity: .9; }
+  .hero h1 { font-family: var(--display); font-size: 30px; line-height: 1.1; margin: 0 0 6px; position: relative; z-index: 1; }
+  .hero p { margin: 0; color: rgba(255,255,255,.85); position: relative; z-index: 1; max-width: 560px; }
+  .selo { display: inline-block; margin-top: 12px; background: #FFC800; color: #3b2f00; font-weight: 800; font-size: 12.5px; border-radius: 999px; padding: 5px 13px; position: relative; z-index: 1; }
+  @media (max-width: 640px) { .hero { padding: 20px 18px; } .hero h1 { font-size: 24px; } }
+
+  .passos { display: flex; gap: 8px; margin: 22px 0 6px; }
+  .passo { flex: 1; display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--line); font-weight: 700; font-size: 13.5px; color: var(--grey); }
+  .passo b { width: 26px; height: 26px; border-radius: 50%; background: var(--line); color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+  .passo.on { color: var(--ink); border-color: var(--brand); }
+  .passo.on b { background: var(--brand); color: #fff; }
+  .passo.ok b { background: var(--ok); color: #fff; }
+  @media (max-width: 560px) { .passo span { display: none; } .passo { justify-content: center; } }
+
+  h2.tit { font-family: var(--display); font-size: 24px; margin: 22px 0 4px; }
+  .sub { color: var(--grey); margin: 0 0 16px; }
+
+  /* ---- modelos ---- */
+  .modelos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .modelo { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; display: flex; flex-direction: column; border: 2px solid transparent; transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .modelo:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .modelo.sel { border-color: var(--brand); }
+  .modelo h3 { font-family: var(--display); font-size: 21px; margin: 0; color: var(--brand); line-height: 1.1; }
+  .modelo .res { color: var(--ink-2); font-weight: 600; margin: 3px 0 12px; font-size: 14px; }
+  .diag { background: #F7F9FE; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; flex: 1; }
+  .lin { display: flex; align-items: center; gap: 12px; }
+  .lin .zona { flex: 0 0 96px; display: flex; justify-content: center; }
+  .forma { background: var(--c); border-radius: 6px; width: calc(var(--w) * 1px); aspect-ratio: var(--ar); max-width: 96px; }
+  .forma.redonda { border-radius: 50%; }
+  .lin .txt { font-size: 12.5px; line-height: 1.3; min-width: 0; }
+  .lin .txt b { display: block; font-size: 13.5px; }
+  .lin .txt span { color: var(--grey); }
+  .preco-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .preco { font-size: 24px; font-weight: 800; }
+  .preco small { font-size: 12.5px; font-weight: 600; color: var(--grey); }
+  .btn { border: 0; border-radius: 12px; padding: 14px 18px; font-weight: 800; font-size: 15px; background: var(--brand); color: #fff; transition: background .2s, transform .15s; text-align: center; text-decoration: none; display: inline-block; }
+  .btn:hover { background: var(--brand-dark); transform: translateY(-1px); }
+  .btn.sec { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.sec:hover { background: var(--ink); color: #fff; }
+  .btn.wa { background: var(--ok); }
+  .btn.wa:hover { background: var(--ok-dark); }
+  .btn[disabled] { opacity: .5; pointer-events: none; }
+  .obs { margin-top: 18px; background: #FFF4D6; border: 1px solid #F2DDA0; border-radius: 12px; padding: 12px 16px; font-weight: 600; color: #5a4400; text-align: center; }
+
+  /* ---- temas ---- */
+  .voltar { background: none; border: 0; color: var(--ink-2); font-weight: 700; padding: 6px 0; font-size: 14px; }
+  .voltar:hover { color: var(--brand); }
+  .escolhido { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 8px 0 14px; flex-wrap: wrap; }
+  .escolhido b { color: var(--brand); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 15px; font-weight: 600; font-size: 13.5px; transition: all .2s; }
+  .chip:hover { border-color: var(--brand); color: var(--brand); }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .busca { width: 100%; max-width: 360px; padding: 11px 16px; border: 1px solid var(--line); border-radius: 999px; background: #fff; margin-bottom: 8px; }
+  .temas { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  @media (max-width: 520px) { .temas { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+  .tema { position: relative; background: #fff; border: 2px solid transparent; border-radius: 14px; box-shadow: var(--shadow); padding: 0; overflow: hidden; text-align: left; transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .tema:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .tema .im { aspect-ratio: 1 / 1; background: #F0F3FA; overflow: hidden; }
+  .tema img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+  .tema:hover img { transform: scale(1.05); }
+  .tema .nm { padding: 9px 11px 11px; font-weight: 700; font-size: 13.5px; line-height: 1.25; }
+  .tema.sel { border-color: var(--brand); }
+  .tema.sel::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); padding: 10px 18px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgba(16,28,63,.1); transform: translateY(110%); transition: transform .25s; }
+  .barra.show { transform: none; }
+  .barra .in { max-width: 1120px; margin: 0 auto; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+  .barra .info { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---- finalizar ---- */
+  .final { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .final { grid-template-columns: 1fr; } }
+  .caixa { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+  .prev { display: flex; gap: 14px; align-items: center; }
+  .prev img { width: 110px; height: 110px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); flex: none; }
+  .prev h3 { margin: 0; font-family: var(--display); font-size: 19px; color: var(--brand); line-height: 1.1; }
+  .prev p { margin: 4px 0 0; color: var(--ink-2); font-size: 13.5px; }
+  label.f { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin: 14px 0 0; }
+  label.f input, label.f textarea { width: 100%; margin-top: 5px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-weight: 500; }
+  .qtd { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; margin-top: 5px; overflow: hidden; }
+  .qtd button { width: 42px; height: 42px; border: 0; background: #F5F8FE; font-size: 20px; font-weight: 700; }
+  .qtd span { min-width: 46px; text-align: center; font-weight: 800; }
+  .lista-ped { display: flex; flex-direction: column; gap: 10px; }
+  .item-ped { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 9px; }
+  .item-ped img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex: none; }
+  .item-ped .t { flex: 1; min-width: 0; font-size: 13.5px; }
+  .item-ped .t b { display: block; }
+  .item-ped .t span { color: var(--grey); }
+  .item-ped .x { border: 0; background: none; color: var(--grey); font-size: 22px; padding: 4px 8px; }
+  .item-ped .x:hover { color: var(--brand); }
+  .total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 18px; margin: 14px 0 4px; }
+  .nota { font-size: 12.5px; color: var(--grey); margin: 6px 0 14px; }
+  .acoes { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .vazio-aviso { background: #FDECEA; border: 1px solid #F5C2BE; color: #8A1C15; border-radius: 12px; padding: 14px 16px; }
+  .skeleton { height: 220px; border-radius: 14px; background: linear-gradient(90deg, #eef2fa 25%, #f7f9fd 50%, #eef2fa 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
+  @keyframes sh { to { background-position: -200% 0; } }
+
+  footer.rodape { margin: 54px 0 0; padding: 30px 0 110px; background: #0E1A3C; color: rgba(255,255,255,.78); font-size: 13px; border-top: 3px solid var(--brand); }
+  .rod-top { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.12); margin-bottom: 16px; }
+  .rod-top img { height: 52px; width: auto; max-width: 160px; object-fit: contain; }
+  .rod-top .nome-txt { font-family: var(--display); font-size: 22px; color: #fff; }
+  .rod-btn { background: var(--brand); color: #fff; border-radius: 6px; padding: 11px 18px; font-weight: 700; font-size: 13.5px; text-decoration: none; }
+  .rod-baixo p { margin: 0 0 6px; white-space: pre-line; }
+  .rod-baixo b { color: #fff; font-weight: 600; }
+  .demo-faixa { background: #FFC800; color: #3b2f00; text-align: center; font-size: 13px; font-weight: 700; padding: 7px 12px; }
+  #toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 60; }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+</style>
+</head>
+<body>
+<div id="faixaDemo"></div>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <a class="logo-link" href="https://vipgraficalimeira.com.br/" id="logoLink" aria-label="Site da Vip Gráfica"><span class="nome-txt">Vip Gráfica</span></a>
+      <a class="btn-top" href="https://catalogo.vipgraficalimeira.com.br/" id="verCatalogo">Catálogo de produtos</a>
+      <button class="pedido-btn oculta" id="abrirPedido" type="button">Meu pedido <span class="count" id="contador">0</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Etiquetas escolares</h1>
+    <p>Escolha o modelo da cartela, depois o tema que você mais gostou. Para finalizar, é só enviar o pedido pelo WhatsApp.</p>
+    <span class="selo">Folha de vinil · resistente à água</span>
+  </section>
+
+  <nav class="passos" aria-label="Passos do pedido">
+    <div class="passo" id="p1"><b>1</b><span>Modelo</span></div>
+    <div class="passo" id="p2"><b>2</b><span>Tema</span></div>
+    <div class="passo" id="p3"><b>3</b><span>Finalizar</span></div>
+  </nav>
+
+  <div id="app"><div class="modelos"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
+</main>
+
+<footer class="rodape"><div class="wrap" id="rodape"></div></footer>
+<div class="barra" id="barra"><div class="in"><div class="info" id="barraInfo"></div><button class="btn" id="barraBtn" type="button">Continuar</button></div></div>
+<div id="toast" role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+  var DEMO = /[?&]demo(=1|=true)?(&|$)/.test(location.search);
+  var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
+  var CHAVE_PUBLICA = "gc2:catalogo_publico";
+  var LS = "etiquetas:pedido";
+
+  // Modelos de cartela (formas e quantidades fixas — a gráfica não altera tamanhos nem quantidades)
+  var ROSA = "#F29BC1", AZUL = "#6FCBDC", LARANJA = "#F2C46D", ROXO = "#8A82B8";
+  var MODELOS = [
+    { id: "a3-1", nome: "Cartela A3 – 1", tamanhos: 4, total: 81, preco: 24.9, itens: [
+      { tam: "3×3 cm", qtd: 16, uso: "régua, cola, copos, itens de higiene pessoal", c: ROSA, w: 44, ar: "1/1", redonda: true },
+      { tam: "4×1 cm", qtd: 48, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" },
+      { tam: "8,6×3 cm", qtd: 9, uso: "caderno, agendas, itens maiores", c: LARANJA, w: 96, ar: "8.6/3" },
+      { tam: "6×4 cm", qtd: 8, uso: "caderno, agendas, itens maiores", c: ROXO, w: 72, ar: "6/4" } ] },
+    { id: "a3-2", nome: "Cartela A3 – 2", tamanhos: 2, total: 80, preco: 24.9, itens: [
+      { tam: "4×1 cm", qtd: 60, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" },
+      { tam: "6×4 cm", qtd: 20, uso: "caderno, agendas, itens maiores", c: ROXO, w: 72, ar: "6/4" } ] },
+    { id: "a4", nome: "Cartela A4", tamanhos: 1, total: 80, preco: 19, itens: [
+      { tam: "4×1 cm", qtd: 80, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" } ] }
+  ];
+
+  var estado = { loja: {}, etq: { temas: [], precos: {} }, passo: 1, modelo: null, tema: null, cat: "Todos", busca: "", pedido: [], qtd: 1, nome: "", obs: "" };
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function urlSegura(u) {
+    if (typeof u !== "string") return "";
+    if (/^https:\/\//i.test(u)) return u;
+    if (DEMO && /^data:image\/svg\+xml/i.test(u)) return u;
+    return "";
+  }
+  function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function toast(m) { var t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("show"); }, 2200); }
+  function numeroWa() { var d = String(estado.loja.whatsapp || "").replace(/\D/g, ""); if (!d) return ""; if (d.length <= 11) d = "55" + d; return d; }
+  function modeloPor(id) { for (var i = 0; i < MODELOS.length; i++) if (MODELOS[i].id === id) return MODELOS[i]; return null; }
+  function precoDe(m) { var p = estado.etq.precos && estado.etq.precos[m.id]; return p != null && isFinite(Number(p)) && Number(p) >= 0 ? Number(p) : m.preco; }
+  function temaPor(id) { var l = estado.etq.temas; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+
+  // ---------- demo ----------
+  function arteTema(nome, a, b, emoji) {
+    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + a + '"/><stop offset="1" stop-color="' + b + '"/></linearGradient></defs><rect width="300" height="300" fill="url(#g)"/><text x="150" y="185" font-size="120" text-anchor="middle">' + emoji + '</text></svg>';
+    return "data:image/svg+xml;utf8," + encodeURIComponent(s);
+  }
+  function dadosDemo() {
+    var t = [["Dinossauros", "#9be3a8", "#4aa86a", "🦖", "Meninos"], ["Unicórnio", "#f9c6ec", "#c58bf5", "🦄", "Meninas"], ["Futebol", "#a8e0ff", "#3d8bd9", "⚽", "Meninos"], ["Sereias", "#b4f0f0", "#4cc3d9", "🧜", "Meninas"], ["Espaço", "#9aa0ff", "#2b2f77", "🚀", "Meninos"], ["Flores", "#ffd1dc", "#ff8fa8", "🌸", "Meninas"], ["Safari", "#ffe29a", "#e0a030", "🦁", "Animais"], ["Gatinhos", "#ffd9b3", "#f29a5a", "🐱", "Animais"]];
+    return { config: { nome: "Vip Gráfica", whatsapp: "19999999999", rodape: "" }, etiquetas: { precos: {}, temas: t.map(function (x, i) { return { id: "t" + i, nome: x[0], categoria: x[4], foto: arteTema(x[0], x[1], x[2], x[3]) }; }) } };
+  }
+
+  // ---------- carga ----------
+  function carregar() {
+    if (DEMO) { var d = dadosDemo(); estado.loja = d.config; estado.etq = d.etiquetas; return Promise.resolve(); }
+    return fetch(SUPABASE_URL + "/rest/v1/app_storage?key=eq." + encodeURIComponent(CHAVE_PUBLICA) + "&select=value", {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }, cache: "no-store"
+    }).then(function (r) { if (!r.ok) throw new Error("rede"); return r.json(); }).then(function (rows) {
+      var v = rows && rows[0] ? rows[0].value : null;
+      if (typeof v === "string") { try { v = JSON.parse(v); } catch (e) { v = null; } }
+      if (!v) throw new Error("vazio");
+      estado.loja = v.config || {};
+      var e = v.etiquetas || {};
+      estado.etq = { precos: e.precos && typeof e.precos === "object" ? e.precos : {}, temas: (Array.isArray(e.temas) ? e.temas : []).filter(function (t) { return t && t.id && t.nome && urlSegura(t.foto); }) };
+    });
+  }
+
+  // ---------- topo / rodapé ----------
+  function renderTopo() {
+    var l = estado.loja, nome = l.nome || "Vip Gráfica", logo = urlSegura(l.logo);
+    $("logoLink").innerHTML = logo ? '<img src="' + esc(logo) + '" alt="' + esc(nome) + '" />' : '<span class="nome-txt">' + esc(nome) + "</span>";
+    if (DEMO) { $("faixaDemo").innerHTML = '<div class="demo-faixa">Pré-visualização com temas de exemplo — nada aqui é real e nenhum pedido é enviado de verdade.</div>'; }
+    var wa = numeroWa();
+    $("rodape").innerHTML = '<div class="rod-top">' + (logo ? '<img src="' + esc(logo) + '" alt="' + esc(nome) + '" />' : '<span class="nome-txt">' + esc(nome) + "</span>") +
+      (wa ? '<a class="rod-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + wa + '">Entrar em contato</a>' : "") + "</div>" +
+      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
+    document.title = "Etiquetas escolares | " + nome;
+  }
+  function renderPassos() {
+    [1, 2, 3].forEach(function (n) { var e = $("p" + n); e.className = "passo" + (estado.passo === n ? " on" : (estado.passo > n ? " ok" : "")); e.querySelector("b").textContent = estado.passo > n ? "✓" : n; });
+    var n = estado.pedido.length; $("contador").textContent = n; $("abrirPedido").classList[n ? "remove" : "add"]("oculta");
+  }
+
+  // ---------- passo 1: modelo ----------
+  function diagHtml(m) {
+    return m.itens.map(function (it) {
+      return '<div class="lin"><div class="zona"><div class="forma' + (it.redonda ? " redonda" : "") + '" style="--c:' + it.c + ";--w:" + it.w + ";--ar:" + it.ar + '"></div></div><div class="txt"><b>' + esc(it.tam) + " · " + it.qtd + " unidades</b><span>" + esc(it.uso) + "</span></div></div>";
+    }).join("");
+  }
+  function viewModelos() {
+    estado.passo = 1; barra(false);
+    $("app").innerHTML = '<h2 class="tit">1. Escolha o modelo da cartela</h2><p class="sub">Folha de vinil, resistente à água. Cada cartela já vem com os tamanhos e quantidades abaixo.</p><div class="modelos">' +
+      MODELOS.map(function (m) {
+        return '<article class="modelo' + (estado.modelo === m.id ? " sel" : "") + '"><h3>' + esc(m.nome) + '</h3><div class="res">' + m.total + " etiquetas · " + m.tamanhos + (m.tamanhos === 1 ? " tamanho" : " tamanhos") + '</div><div class="diag">' + diagHtml(m) + "</div>" +
+          '<div class="preco-linha"><div class="preco">' + brl(precoDe(m)) + " <small>cada cartela</small></div></div>" +
+          '<button class="btn" type="button" data-modelo="' + m.id + '">Escolher este modelo</button></article>';
+      }).join("") + '</div><div class="obs">Não alteramos tamanhos e quantidades das cartelas.</div>';
+    renderPassos(); window.scrollTo({ top: 0 });
+  }
+
+  // ---------- passo 2: tema ----------
+  function categoriasTema() { var s = {}, l = []; estado.etq.temas.forEach(function (t) { var c = (t.categoria || "").trim(); if (c && !s[c]) { s[c] = 1; l.push(c); } }); return l; }
+  function temasFiltrados() {
+    var q = estado.busca.trim().toLowerCase();
+    return estado.etq.temas.filter(function (t) { return (estado.cat === "Todos" || (t.categoria || "").trim() === estado.cat) && (!q || t.nome.toLowerCase().indexOf(q) >= 0); });
+  }
+  function viewTemas() {
+    estado.passo = 2; var m = modeloPor(estado.modelo);
+    if (!m) return viewModelos();
+    var cats = categoriasTema();
+    $("app").innerHTML = '<button class="voltar" type="button" id="vMod">← Trocar modelo</button>' +
+      '<h2 class="tit">2. Escolha o tema</h2><div class="escolhido">Modelo escolhido: <b>' + esc(m.nome) + "</b> · " + brl(precoDe(m)) + "</div>" +
+      (estado.etq.temas.length ? (cats.length ? '<div class="chips" id="chips">' + ["Todos"].concat(cats).map(function (c) { return '<button type="button" class="chip' + (c === estado.cat ? " on" : "") + '" data-cat="' + esc(c) + '">' + esc(c) + "</button>"; }).join("") + "</div>" : "") +
+        '<input class="busca" id="buscaTema" type="search" placeholder="Buscar tema" autocomplete="off" value="' + esc(estado.busca) + '" aria-label="Buscar tema"><div class="temas" id="temas"></div>'
+        : '<div class="vazio-aviso">Os temas ainda estão sendo cadastrados. Fale com a gente pelo WhatsApp que enviamos as opções.</div>');
+    renderTemas(); renderPassos(); barraTema(); window.scrollTo({ top: 0 });
+  }
+  function renderTemas() {
+    var box = $("temas"); if (!box) return;
+    var l = temasFiltrados();
+    box.innerHTML = l.length ? l.map(function (t) {
+      return '<button class="tema' + (estado.tema === t.id ? " sel" : "") + '" type="button" data-tema="' + esc(t.id) + '"><div class="im"><img src="' + esc(urlSegura(t.foto)) + '" alt="' + esc(t.nome) + '" loading="lazy" /></div><div class="nm">' + esc(t.nome) + "</div></button>";
+    }).join("") : '<p class="sub" style="grid-column:1/-1">Nenhum tema encontrado.</p>';
+  }
+  function barra(on) { $("barra").classList[on ? "add" : "remove"]("show"); }
+  function barraTema() {
+    var t = temaPor(estado.tema);
+    if (!t) return barra(false);
+    $("barraInfo").textContent = "Tema: " + t.nome; $("barraBtn").textContent = "Continuar →"; barra(true);
+  }
+
+  // ---------- passo 3: finalizar ----------
+  function totalPedido() { var s = 0, ok = true; estado.pedido.forEach(function (i) { var m = modeloPor(i.modelo); if (m) s += precoDe(m) * i.qtd; else ok = false; }); return ok ? s : null; }
+  function viewFinal() {
+    estado.passo = 3; barra(false);
+    var m = modeloPor(estado.modelo), t = temaPor(estado.tema);
+    if (!m || !t) return viewTemas();
+    $("app").innerHTML = '<button class="voltar" type="button" id="vTema">← Trocar tema</button><h2 class="tit">3. Finalizar</h2><p class="sub">Confira, adicione o nome se quiser e envie o pedido pelo WhatsApp.</p>' +
+      '<div class="final"><div class="caixa"><div class="prev"><img src="' + esc(urlSegura(t.foto)) + '" alt="' + esc(t.nome) + '" /><div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + brl(precoDe(m)) + " cada cartela</p></div></div>" +
+      '<label class="f">Quantidade de cartelas<br><span class="qtd"><button type="button" id="menos" aria-label="Menos">−</button><span id="qv">' + estado.qtd + '</span><button type="button" id="mais" aria-label="Mais">+</button></span></label>' +
+      '<label class="f">Nome para as etiquetas (opcional)<input type="text" id="fNome" maxlength="60" placeholder="Ex: Maria Clara" value="' + esc(estado.nome) + '"></label>' +
+      '<label class="f">Observação (opcional)<textarea id="fObs" rows="2" maxlength="300" placeholder="Turma, escola, algum detalhe…">' + esc(estado.obs) + "</textarea></label>" +
+      '<div class="acoes"><button class="btn sec" type="button" id="addOutro">+ Adicionar à lista e escolher outra cartela</button></div></div>' +
+      '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp. Aqui você só escolhe o modelo e o tema.</p>' +
+      '<div class="acoes"><button class="btn wa" type="button" id="enviar">Enviar pedido pelo WhatsApp</button></div></div></div>';
+    renderPassos(); renderLista(); window.scrollTo({ top: 0 });
+  }
+  function itemAtual() { return { modelo: estado.modelo, tema: estado.tema, qtd: estado.qtd, nome: estado.nome.trim(), obs: estado.obs.trim() }; }
+  function listaCompleta() { return estado.pedido.concat([itemAtual()]); }
+  function renderLista() {
+    var l = listaCompleta();
+    $("listaPed").innerHTML = l.map(function (i, k) {
+      var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return "";
+      return '<div class="item-ped"><img src="' + esc(urlSegura(t.foto)) + '" alt=""><div class="t"><b>' + i.qtd + "× " + esc(m.nome) + "</b><span>" + esc(t.nome) + (i.nome ? " · " + esc(i.nome) : "") + "</span></div>" +
+        '<div style="font-weight:800;font-size:13.5px">' + brl(precoDe(m) * i.qtd) + "</div>" + (k < estado.pedido.length ? '<button class="x" type="button" data-rem="' + k + '" aria-label="Remover">×</button>' : "") + "</div>";
+    }).join("");
+    var s = 0; l.forEach(function (i) { var m = modeloPor(i.modelo); if (m) s += precoDe(m) * i.qtd; });
+    $("totalBox").innerHTML = "<span>Total</span><span>" + brl(s) + "</span>";
+  }
+  function mensagem() {
+    var l = listaCompleta(), nome = estado.loja.nome || "Vip Gráfica", s = 0;
+    var linhas = ["Olá! Vim pelo catálogo da " + nome + " e quero fazer um pedido de *etiquetas escolares* (vinil resistente à água):", ""];
+    l.forEach(function (i, k) {
+      var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return; s += precoDe(m) * i.qtd;
+      linhas.push((k + 1) + ") " + i.qtd + "× " + m.nome + " (" + m.total + " etiquetas) — " + brl(precoDe(m)) + " cada");
+      linhas.push("   Tema: " + t.nome);
+      if (i.nome) linhas.push("   Nome: " + i.nome);
+      if (i.obs) linhas.push("   Obs: " + i.obs);
+    });
+    linhas.push("", "*Total: " + brl(s) + "*");
+    return linhas.join("\n");
+  }
+  function enviar() {
+    var wa = numeroWa(); if (!wa) { toast("WhatsApp da loja não cadastrado."); return; }
+    var url = "https://wa.me/" + wa + "?text=" + encodeURIComponent(mensagem());
+    if (DEMO) { toast("Na pré-visualização nada é enviado."); return; }
+    window.open(url, "_blank", "noopener");
+  }
+
+  // ---------- eventos ----------
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button"); if (!t) return; var v;
+    if ((v = t.getAttribute("data-modelo"))) { if (estado.modelo !== v) { estado.tema = null; } estado.modelo = v; return viewTemas(); }
+    if ((v = t.getAttribute("data-cat"))) { estado.cat = v; var cs = document.querySelectorAll("#chips .chip"); for (var i = 0; i < cs.length; i++) cs[i].classList[cs[i].getAttribute("data-cat") === v ? "add" : "remove"]("on"); return renderTemas(); }
+    if ((v = t.getAttribute("data-tema"))) { estado.tema = v; renderTemas(); return barraTema(); }
+    if ((v = t.getAttribute("data-rem"))) { estado.pedido.splice(Number(v), 1); lsSet(LS, estado.pedido); renderPassos(); return renderLista(); }
+    if (t.id === "barraBtn") return viewFinal();
+    if (t.id === "vMod") return viewModelos();
+    if (t.id === "vTema") return viewTemas();
+    if (t.id === "mais") { estado.qtd = Math.min(50, estado.qtd + 1); $("qv").textContent = estado.qtd; return renderLista(); }
+    if (t.id === "menos") { estado.qtd = Math.max(1, estado.qtd - 1); $("qv").textContent = estado.qtd; return renderLista(); }
+    if (t.id === "addOutro") { estado.pedido.push(itemAtual()); lsSet(LS, estado.pedido); estado.tema = null; estado.modelo = null; estado.qtd = 1; estado.obs = ""; toast("Adicionado ao seu pedido."); return viewModelos(); }
+    if (t.id === "enviar") return enviar();
+    if (t.id === "abrirPedido") {
+      if (!(estado.modelo && estado.tema) && estado.pedido.length) { var u = estado.pedido.pop(); estado.modelo = u.modelo; estado.tema = u.tema; estado.qtd = u.qtd; estado.nome = u.nome; estado.obs = u.obs; lsSet(LS, estado.pedido); }
+      return viewFinal();
+    }
+  });
+  document.addEventListener("input", function (e) {
+    if (e.target.id === "buscaTema") { estado.busca = e.target.value; return renderTemas(); }
+    if (e.target.id === "fNome") { estado.nome = e.target.value; return renderLista(); }
+    if (e.target.id === "fObs") { estado.obs = e.target.value; }
+  });
+
+  // ---------- início ----------
+  estado.pedido = (lsGet(LS, []) || []).filter(function (i) { return i && i.modelo && i.tema; });
+  carregar().then(function () {
+    estado.pedido = estado.pedido.filter(function (i) { return modeloPor(i.modelo) && temaPor(i.tema); });
+    renderTopo(); viewModelos();
+  }, function () {
+    $("app").innerHTML = '<div class="vazio-aviso"><b>Não consegui carregar as etiquetas agora.</b><br>Confira sua internet e atualize a página. Se continuar, entre em contato com a gente.</div>'; barra(false);
+  });
+})();
+</script>
+</body>
+</html>
