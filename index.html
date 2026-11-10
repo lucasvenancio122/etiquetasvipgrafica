@@ -279,7 +279,7 @@
     $("app").innerHTML = '<h2 class="tit">1. Escolha o modelo da cartela</h2><p class="sub">Folha de vinil, resistente à água. Cada cartela já vem com os tamanhos e quantidades abaixo.</p><div class="modelos">' +
       MODELOS.map(function (m) {
         return '<article class="modelo' + (estado.modelo === m.id ? " sel" : "") + '"><h3>' + esc(m.nome) + '</h3><div class="res">' + m.total + " etiquetas · " + m.tamanhos + (m.tamanhos === 1 ? " tamanho" : " tamanhos") + '</div>' +
-          '<button class="exemplo" type="button" data-zoom="' + esc(m.img) + '" aria-label="Ampliar exemplo da ' + esc(m.nome) + '"><img src="' + esc(m.img) + '" alt="Exemplo da ' + esc(m.nome) + '" loading="lazy" /><span class="lupa">🔍 ampliar</span></button><p class="leg">Exemplo de como a cartela fica (tema e nomes de exemplo)</p><div class="diag">' + diagHtml(m) + "</div>" +
+          '<button class="exemplo" type="button" data-zoom="' + esc(m.img) + '" aria-label="Ampliar exemplo da ' + esc(m.nome) + '"><img src="' + esc(m.img) + '" alt="Exemplo da ' + esc(m.nome) + '" loading="lazy" /><span class="lupa">🔍 ampliar</span></button><p class="leg">Exemplo ilustrativo de como a cartela fica (nome e tema são só de exemplo)</p><div class="diag">' + diagHtml(m) + "</div>" +
           '<div class="preco-linha"><div class="preco">' + brl(precoDe(m)) + " <small>cada cartela</small></div></div>" +
           '<button class="btn" type="button" data-modelo="' + m.id + '">Escolher este modelo</button></article>';
       }).join("") + '</div><div class="obs">Não alteramos tamanhos e quantidades das cartelas.</div>';
