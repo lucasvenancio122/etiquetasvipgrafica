@@ -62,6 +62,12 @@
   .modelo.sel { border-color: var(--brand); }
   .modelo h3 { font-family: var(--display); font-size: 21px; margin: 0; color: var(--brand); line-height: 1.1; }
   .modelo .res { color: var(--ink-2); font-weight: 600; margin: 3px 0 12px; font-size: 14px; }
+  .exemplo { position: relative; display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #F0F3FA; margin-bottom: 8px; cursor: zoom-in; }
+  .exemplo img { width: 100%; height: auto; display: block; }
+  .exemplo .lupa { position: absolute; right: 8px; bottom: 8px; background: rgba(16,28,63,.85); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 4px 11px; }
+  .leg { font-size: 12px; color: var(--grey); margin: 0 0 12px; text-align: center; }
+  #zoom { position: fixed; inset: 0; z-index: 80; background: rgba(10,18,40,.88); display: flex; align-items: center; justify-content: center; padding: 18px; cursor: zoom-out; }
+  #zoom img { max-width: 100%; max-height: 100%; border-radius: 8px; background: #fff; }
   .diag { background: #F7F9FE; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; flex: 1; }
   .lin { display: flex; align-items: center; gap: 12px; }
   .lin .zona { flex: 0 0 96px; display: flex; justify-content: center; }
@@ -191,15 +197,15 @@
   // Modelos de cartela (formas e quantidades fixas — a gráfica não altera tamanhos nem quantidades)
   var ROSA = "#F29BC1", AZUL = "#6FCBDC", LARANJA = "#F2C46D", ROXO = "#8A82B8";
   var MODELOS = [
-    { id: "a3-1", nome: "Cartela A3 – 1", tamanhos: 4, total: 81, preco: 24.9, itens: [
+    { id: "a3-1", img: "modelos/a3-1.jpg", nome: "Cartela A3 – 1", tamanhos: 4, total: 81, preco: 24.9, itens: [
       { tam: "3×3 cm", qtd: 16, uso: "régua, cola, copos, itens de higiene pessoal", c: ROSA, w: 44, ar: "1/1", redonda: true },
       { tam: "4×1 cm", qtd: 48, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" },
       { tam: "8,6×3 cm", qtd: 9, uso: "caderno, agendas, itens maiores", c: LARANJA, w: 96, ar: "8.6/3" },
       { tam: "6×4 cm", qtd: 8, uso: "caderno, agendas, itens maiores", c: ROXO, w: 72, ar: "6/4" } ] },
-    { id: "a3-2", nome: "Cartela A3 – 2", tamanhos: 2, total: 80, preco: 24.9, itens: [
+    { id: "a3-2", img: "modelos/a3-2.jpg", nome: "Cartela A3 – 2", tamanhos: 2, total: 80, preco: 24.9, itens: [
       { tam: "4×1 cm", qtd: 60, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" },
       { tam: "6×4 cm", qtd: 20, uso: "caderno, agendas, itens maiores", c: ROXO, w: 72, ar: "6/4" } ] },
-    { id: "a4", nome: "Cartela A4", tamanhos: 1, total: 80, preco: 19, itens: [
+    { id: "a4", img: "modelos/a4.jpg", nome: "Cartela A4", tamanhos: 1, total: 80, preco: 19, itens: [
       { tam: "4×1 cm", qtd: 80, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" } ] }
   ];
 
@@ -272,7 +278,8 @@
     estado.passo = 1; barra(false);
     $("app").innerHTML = '<h2 class="tit">1. Escolha o modelo da cartela</h2><p class="sub">Folha de vinil, resistente à água. Cada cartela já vem com os tamanhos e quantidades abaixo.</p><div class="modelos">' +
       MODELOS.map(function (m) {
-        return '<article class="modelo' + (estado.modelo === m.id ? " sel" : "") + '"><h3>' + esc(m.nome) + '</h3><div class="res">' + m.total + " etiquetas · " + m.tamanhos + (m.tamanhos === 1 ? " tamanho" : " tamanhos") + '</div><div class="diag">' + diagHtml(m) + "</div>" +
+        return '<article class="modelo' + (estado.modelo === m.id ? " sel" : "") + '"><h3>' + esc(m.nome) + '</h3><div class="res">' + m.total + " etiquetas · " + m.tamanhos + (m.tamanhos === 1 ? " tamanho" : " tamanhos") + '</div>' +
+          '<button class="exemplo" type="button" data-zoom="' + esc(m.img) + '" aria-label="Ampliar exemplo da ' + esc(m.nome) + '"><img src="' + esc(m.img) + '" alt="Exemplo da ' + esc(m.nome) + '" loading="lazy" /><span class="lupa">🔍 ampliar</span></button><p class="leg">Exemplo de como a cartela fica (tema e nomes de exemplo)</p><div class="diag">' + diagHtml(m) + "</div>" +
           '<div class="preco-linha"><div class="preco">' + brl(precoDe(m)) + " <small>cada cartela</small></div></div>" +
           '<button class="btn" type="button" data-modelo="' + m.id + '">Escolher este modelo</button></article>';
       }).join("") + '</div><div class="obs">Não alteramos tamanhos e quantidades das cartelas.</div>';
@@ -361,6 +368,7 @@
   // ---------- eventos ----------
   document.addEventListener("click", function (e) {
     var t = e.target.closest("button"); if (!t) return; var v;
+    if ((v = t.getAttribute("data-zoom"))) { var z = document.createElement("div"); z.id = "zoom"; z.innerHTML = '<img src="' + esc(v) + '" alt="Exemplo da cartela" />'; z.addEventListener("click", function () { z.remove(); }); document.body.appendChild(z); return; }
     if ((v = t.getAttribute("data-modelo"))) { if (estado.modelo !== v) { estado.tema = null; } estado.modelo = v; return viewTemas(); }
     if ((v = t.getAttribute("data-cat"))) { estado.cat = v; var cs = document.querySelectorAll("#chips .chip"); for (var i = 0; i < cs.length; i++) cs[i].classList[cs[i].getAttribute("data-cat") === v ? "add" : "remove"]("on"); return renderTemas(); }
     if ((v = t.getAttribute("data-tema"))) { estado.tema = v; renderTemas(); return barraTema(); }
