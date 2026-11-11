@@ -64,7 +64,7 @@
     </div>
     <div class="card"><h2>Preço de cada cartela</h2><div class="grid" id="precos"></div></div>
     <div class="card"><h2>Temas <span class="mut" id="nTemas"></span></h2>
-      <p class="mut">Envie várias imagens de uma vez: cada imagem vira um tema, com o nome do arquivo. Depois ajuste os nomes. A categoria (ex.: Meninas, Meninos) ajuda o cliente a filtrar. Para o cliente, a imagem deve mostrar o tema com os tamanhos da cartela.</p>
+      <p class="mut">Envie várias imagens de uma vez: cada imagem vira um tema, com o nome do arquivo. Depois ajuste os nomes. A categoria (ex.: Meninas, Meninos) ajuda o cliente a filtrar. Suba a arte com os 4 tamanhos empilhados (redonda, lápis, grande e 6×4, de cima para baixo): o sistema monta sozinho a versão da A3-2 e da A4.</p>
       <div class="barra">
         <label class="f" style="flex:1;min-width:200px">Categoria dos temas que vou enviar agora (opcional)<input type="text" id="eCatNova" list="listaCats" placeholder="Ex: Meninas"></label>
         <label class="btn p sm">+ Enviar temas<input type="file" id="arqs" accept="image/*" multiple style="display:none"></label>
@@ -136,7 +136,7 @@
     $("nTemas").textContent = "(" + l.length + ")";
     $("temas").innerHTML = l.length ? l.map(function (t, i) {
       return '<div class="tema' + (t.ativo === false ? " off" : "") + '"><img src="' + esc(srcImg(t.foto)) + '" alt="">' +
-        '<label class="f" style="flex:1;min-width:140px">Nome<input type="text" data-n="' + i + '" value="' + esc(t.nome) + '"></label>' +
+        (t.fotos ? '<span class="mut" title="Versões A3-2 e A4 montadas automaticamente">✔ 3 versões</span>' : '<span class="mut" title="Mesma imagem em todas as cartelas">1 imagem</span>') + '<label class="f" style="flex:1;min-width:140px">Nome<input type="text" data-n="' + i + '" value="' + esc(t.nome) + '"></label>' +
         '<label class="f" style="width:160px">Categoria<input type="text" data-c="' + i + '" list="listaCats" value="' + esc(t.categoria || "") + '"></label>' +
         '<button class="btn sm" type="button" data-tog="' + i + '">' + (t.ativo === false ? "mostrar" : "ocultar") + '</button><button class="btn sm" type="button" data-del="' + i + '">excluir</button></div>';
     }).join("") : '<p class="mut">Nenhum tema ainda. Use “+ Enviar temas”.</p>';
@@ -148,33 +148,74 @@
   }
   function salvar() {
     coletar(); var d = st.dados, b = $("salvar"); b.disabled = true; msg("Salvando…");
-    var valor = { atualizadoEm: Date.now(), config: d.config, etiquetas: { precos: d.precos, temas: d.temas.filter(function (t) { return t && t.id && t.foto; }).map(function (t) { return { id: t.id, nome: String(t.nome || "").trim() || "Tema", categoria: String(t.categoria || "").trim(), foto: t.foto, ativo: t.ativo !== false }; }) } };
+    var valor = { atualizadoEm: Date.now(), config: d.config, etiquetas: { precos: d.precos, temas: d.temas.filter(function (t) { return t && t.id && t.foto; }).map(function (t) { return { id: t.id, nome: String(t.nome || "").trim() || "Tema", categoria: String(t.categoria || "").trim(), foto: t.foto, fotos: t.fotos || undefined, ativo: t.ativo !== false }; }) } };
     return token().then(function (t) { return fetch(SUPABASE_URL + "/rest/v1/app_storage", { method: "POST", headers: hdr(t, { Prefer: "resolution=merge-duplicates" }), body: JSON.stringify({ key: CHAVE, value: valor, shared: true, updated_at: new Date().toISOString() }), signal: timeout(20000) }); })
       .then(function (r) { if (r.ok) { marcar(false); return msg("Salvo e publicado! O site já mostra as mudanças.", "ok"); } throw new Error(r.status === 401 || r.status === 403 ? "Sem permissão para salvar (precisa ser administrador)." : "Não consegui salvar (" + r.status + ")."); })
       .then(function () { b.disabled = false; }, function (e) { b.disabled = false; msg(e.message, "erro"); });
   }
 
   // ---- upload de temas ----
-  function redimensionar(file, maxDim) {
+  function carregarArquivo(file) {
     return new Promise(function (res, rej) {
       var rd = new FileReader();
-      rd.onload = function (e) { var img = new Image(); img.onload = function () { var w = img.width, h = img.height; if (w > maxDim || h > maxDim) { if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; } }
-        var c = document.createElement("canvas"); c.width = w; c.height = h; var cx = c.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h); c.toBlob(function (b) { b ? res(b) : rej(new Error("Não consegui processar a imagem.")); }, "image/jpeg", 0.88); };
-        img.onerror = function () { rej(new Error("Arquivo de imagem inválido.")); }; img.src = e.target.result; };
+      rd.onload = function (e) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { rej(new Error("Arquivo de imagem inválido.")); }; im.src = e.target.result; };
       rd.onerror = function () { rej(new Error("Não consegui ler o arquivo.")); }; rd.readAsDataURL(file);
     });
   }
+  function canvasDe(img, maxDim) {
+    var w = img.width, h = img.height; if (w > maxDim || h > maxDim) { if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; } }
+    var c = document.createElement("canvas"); c.width = w; c.height = h; var cx = c.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h); return c;
+  }
+  // acha as etiquetas empilhadas na arte (de cima para baixo): redonda, lápis, grande, 6x4
+  function acharEtiquetas(c) {
+    var w = c.width, h = c.height, d = c.getContext("2d").getImageData(0, 0, w, h).data, linhas = [], y, x;
+    for (y = 0; y < h; y++) { var tem = false; for (x = 0; x < w; x += 2) { var i = (y * w + x) * 4; if (d[i] < 238 || d[i + 1] < 238 || d[i + 2] < 238) { tem = true; break; } } linhas.push(tem); }
+    var faixas = [], ini = -1, vazio = 0, folga = Math.max(3, Math.round(h * 0.012));
+    for (y = 0; y <= h; y++) {
+      if (y < h && linhas[y]) { if (ini < 0) ini = y; vazio = 0; }
+      else if (ini >= 0) { vazio++; if (vazio > folga || y === h) { faixas.push([ini, y - vazio]); ini = -1; vazio = 0; } }
+    }
+    faixas = faixas.filter(function (f) { return f[1] - f[0] > h * 0.03; });
+    if (faixas.length !== 4) return null;
+    var out = faixas.map(function (f) {
+      var x0 = w, x1 = 0; for (var yy = f[0]; yy <= f[1]; yy++) for (var xx = 0; xx < w; xx++) { var i = (yy * w + xx) * 4; if (d[i] < 238 || d[i + 1] < 238 || d[i + 2] < 238) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; } }
+      return { x: x0, y: f[0], w: x1 - x0 + 1, h: f[1] - f[0] + 1 };
+    });
+    return out[1].w / out[1].h > 3 && out[3].w / out[3].h > 1.1 && out[3].w / out[3].h < 2.2 ? out : null;
+  }
+  function montarA32(c, e) {
+    var N = 900, o = document.createElement("canvas"); o.width = o.height = N; var cx = o.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, N, N);
+    var lap = e[1], g = e[3], wl = N * 0.6, hl = wl * lap.h / lap.w, wg = N * 0.85, hg = wg * g.h / g.w, maxH = N - 2 * 40 - hl - 40;
+    if (hg > maxH) { hg = maxH; wg = hg * g.w / g.h; }
+    var tot = hl + 40 + hg, y0 = (N - tot) / 2;
+    cx.drawImage(c, lap.x, lap.y, lap.w, lap.h, (N - wl) / 2, y0, wl, hl); cx.drawImage(c, g.x, g.y, g.w, g.h, (N - wg) / 2, y0 + hl + 40, wg, hg); return o;
+  }
+  function montarA4(c, e) {
+    var N = 900, o = document.createElement("canvas"); o.width = o.height = N; var cx = o.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, N, N);
+    var lap = e[1], m = 30, gap = 22, wl = (N - 2 * m - gap) / 2, hl = wl * lap.h / lap.w, tot = 5 * hl + 4 * gap, y0 = (N - tot) / 2;
+    for (var r = 0; r < 5; r++) for (var k = 0; k < 2; k++) cx.drawImage(c, lap.x, lap.y, lap.w, lap.h, m + k * (wl + gap), y0 + r * (hl + gap), wl, hl);
+    return o;
+  }
+  function paraBlob(c) { return new Promise(function (res, rej) { c.toBlob(function (b) { b ? res(b) : rej(new Error("Não consegui processar a imagem.")); }, "image/jpeg", 0.88); }); }
+  function subirBlob(blob) {
+    var nome = "etiqueta-tema-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+    return token().then(function (t) { return fetch(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + nome, { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "image/jpeg" }, body: blob, signal: timeout(30000) }); })
+      .then(function (r) { if (!r.ok) throw new Error("Não consegui enviar a imagem (" + r.status + ")."); return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + nome; });
+  }
+  // devolve { foto, fotos?, auto }
   function enviarFoto(file) {
-    return redimensionar(file, 1000).then(function (blob) {
-      var nome = "etiqueta-tema-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
-      return token().then(function (t) { return fetch(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + nome, { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "image/jpeg" }, body: blob, signal: timeout(30000) }); })
-        .then(function (r) { if (!r.ok) throw new Error("Não consegui enviar a imagem (" + r.status + ")."); return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + nome; });
+    return carregarArquivo(file).then(function (img) {
+      var c = canvasDe(img, 1400), e = acharEtiquetas(c), tema = { auto: !!e };
+      return paraBlob(canvasDe(img, 1000)).then(subirBlob).then(function (u) {
+        tema.foto = u; if (!e) return tema;
+        return paraBlob(montarA32(c, e)).then(subirBlob).then(function (u2) { return paraBlob(montarA4(c, e)).then(subirBlob).then(function (u3) { tema.fotos = { "a3-2": u2, a4: u3 }; return tema; }); });
+      });
     });
   }
   function enviarTemas(arqs) {
-    var cat = $("eCatNova").value.trim(), n = 0, sp = $("eSt"); coletar();
-    return arqs.reduce(function (p, f) { return p.then(function () { sp.textContent = "Enviando " + (++n) + " de " + arqs.length + "…"; return enviarFoto(f).then(function (u) { st.dados.temas.push({ id: uid(), nome: nomeDoArquivo(f.name), categoria: cat, foto: u, ativo: true }); }); }); }, Promise.resolve())
-      .then(function () { sp.textContent = ""; renderTemas(); marcar(true); msg(arqs.length + " tema(s) adicionados. Ajuste os nomes e clique em “Salvar e publicar”.", "ok"); },
+    var cat = $("eCatNova").value.trim(), n = 0, sp = $("eSt"), semAuto = 0; coletar();
+    return arqs.reduce(function (p, f) { return p.then(function () { sp.textContent = "Enviando " + (++n) + " de " + arqs.length + "…"; return enviarFoto(f).then(function (r) { if (!r.auto) semAuto++; var t = { id: uid(), nome: nomeDoArquivo(f.name), categoria: cat, foto: r.foto, ativo: true }; if (r.fotos) t.fotos = r.fotos; st.dados.temas.push(t); }); }); }, Promise.resolve())
+      .then(function () { sp.textContent = ""; renderTemas(); marcar(true); msg(arqs.length + " tema(s) adicionados" + (semAuto ? ". Em " + semAuto + " não reconheci os 4 tamanhos (redonda, lápis, grande e 6×4, de cima para baixo): essa imagem aparece igual em todas as cartelas" : " — as versões de cada cartela foram montadas automaticamente") + ". Ajuste os nomes e clique em “Salvar e publicar”.", semAuto ? "" : "ok"); },
         function (e) { sp.textContent = ""; renderTemas(); marcar(true); msg(e.message + " Os que já subiram estão na lista; clique em “Salvar e publicar”.", "erro"); });
   }
 

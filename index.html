@@ -236,6 +236,7 @@
   function precoDe(m) { var p = estado.etq.precos && estado.etq.precos[m.id]; return p != null && isFinite(Number(p)) && Number(p) >= 0 ? Number(p) : m.preco; }
   // Cada cartela mostra só os tamanhos que ela realmente tem (A3-2: lápis + 6x4; A4: só lápis)
   function fotoDe(t, modeloId) {
+    var esp = t.fotos && modeloId && urlSegura(t.fotos[modeloId]); if (esp) return esp;
     var f = urlSegura(t.foto), pasta = modeloId === "a3-2" ? "a3-2" : (modeloId === "a4" ? "a4" : "");
     return pasta && /^temas\/[^\/]+$/.test(f) ? f.replace(/^temas\//, "temas/" + pasta + "/") : f;
   }
