@@ -215,6 +215,7 @@
   function urlSegura(u) {
     if (typeof u !== "string") return "";
     if (/^https:\/\//i.test(u)) return u;
+    if (/^temas\/[a-z0-9._-]+\.(jpg|png)$/i.test(u)) return u;
     if (DEMO && /^data:image\/svg\+xml/i.test(u)) return u;
     return "";
   }
