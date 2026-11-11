@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin das etiquetas | Vip Gráfica</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" />
+<style>
+  :root { --bg:#F3F7FF; --ink:#101C3F; --ink-2:#3B4560; --line:#E1E7F3; --grey:#6B7385; --brand:#E5332B; --ok:#1FA855; --display:"Rowdies","Inter",system-ui,sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Inter",system-ui,sans-serif; }
+  button,input,select { font:inherit; color:inherit; }
+  button,label.btn { cursor:pointer; }
+  .oculta { display:none !important; }
+  header { background:#fff; border-bottom:3px solid var(--brand); padding:10px 18px; display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+  header h1 { font-family:var(--display); font-size:19px; margin:0; flex:1; }
+  .btn { display:inline-block; border:1px solid var(--ink); background:#fff; border-radius:8px; padding:9px 14px; font-weight:600; font-size:14px; }
+  .btn:hover { background:var(--ink); color:#fff; }
+  .btn.p { background:var(--ink); color:#fff; } .btn.sm { padding:6px 10px; font-size:13px; }
+  .btn.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
+  .wrap { max-width:960px; margin:0 auto; padding:16px 18px 80px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-family:var(--display); font-size:18px; margin:0 0 10px; }
+  .login { max-width:360px; margin:60px auto; background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:0 8px 24px rgba(16,28,63,.08); }
+  .login h2 { font-family:var(--display); margin:0 0 4px; }
+  label.f { display:block; font-weight:600; font-size:13px; }
+  input[type=text],input[type=password],input[type=tel] { width:100%; border:1px solid #CBD3E6; border-radius:8px; padding:9px 12px; background:#fff; margin-top:4px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .mut { color:var(--grey); font-size:13px; }
+  .erro { color:#C42A23; font-weight:600; margin-top:10px; min-height:20px; }
+  #msg .aviso { padding:10px 14px; border-radius:10px; margin-bottom:12px; font-weight:600; background:#FFF3CD; }
+  #msg .aviso.ok { background:#D6F3E1; color:#0F6B36; } #msg .aviso.erro { background:#FDE0DE; color:#B3261E; }
+  .tema { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px; }
+  .tema.off { opacity:.5; }
+  .tema img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); background:#f2f2f2; }
+  .tema label.f { margin:0; }
+  .barra { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; }
+  .salvar { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line); padding:10px 18px; display:flex; gap:10px; justify-content:center; align-items:center; }
+</style>
+</head>
+<body>
+<div id="telaLogin" class="login">
+  <h2>Admin das etiquetas</h2>
+  <p class="mut">Entre com o seu usuário de administrador do sistema.</p>
+  <form id="fLogin">
+    <label class="f" style="margin-top:12px">Usuário<input type="text" id="lUser" autocomplete="username" autocapitalize="none" required></label>
+    <label class="f" style="margin-top:12px">Senha<input type="password" id="lPass" autocomplete="current-password" required></label>
+    <div class="erro" id="lErro"></div>
+    <button class="btn p" style="width:100%" id="lBtn">Entrar</button>
+  </form>
+</div>
+
+<div id="telaApp" class="oculta">
+  <header><h1>Admin das etiquetas <span class="mut" style="font-family:Inter;font-weight:500">· versão 1</span></h1><a class="btn sm" href="pedidos.html">Pedidos</a><a class="btn sm" href="index.html" target="_blank" rel="noopener">Ver o site</a><span class="mut" id="quem"></span><button class="btn sm" id="sair" type="button">Sair</button></header>
+  <div class="wrap">
+    <div id="msg"></div>
+    <div class="card"><h2>Dados do site</h2>
+      <div class="grid">
+        <label class="f">Nome da loja<input type="text" id="cNome" maxlength="60"></label>
+        <label class="f">WhatsApp que recebe os pedidos<input type="tel" id="cWa" placeholder="5519999999999"></label>
+        <label class="f">Texto do rodapé (opcional)<input type="text" id="cRod" maxlength="160"></label>
+      </div>
+    </div>
+    <div class="card"><h2>Preço de cada cartela</h2><div class="grid" id="precos"></div></div>
+    <div class="card"><h2>Temas <span class="mut" id="nTemas"></span></h2>
+      <p class="mut">Envie várias imagens de uma vez: cada imagem vira um tema, com o nome do arquivo. Depois ajuste os nomes. A categoria (ex.: Meninas, Meninos) ajuda o cliente a filtrar. Para o cliente, a imagem deve mostrar o tema com os tamanhos da cartela.</p>
+      <div class="barra">
+        <label class="f" style="flex:1;min-width:200px">Categoria dos temas que vou enviar agora (opcional)<input type="text" id="eCatNova" list="listaCats" placeholder="Ex: Meninas"></label>
+        <label class="btn p sm">+ Enviar temas<input type="file" id="arqs" accept="image/*" multiple style="display:none"></label>
+        <button class="btn sm" type="button" id="ordenar">Ordenar A–Z</button><span class="mut" id="eSt"></span>
+      </div>
+      <datalist id="listaCats"></datalist>
+      <div id="temas"></div>
+    </div>
+  </div>
+  <div class="salvar"><span class="mut" id="sujo"></span><button class="btn ok" id="salvar" type="button">Salvar e publicar</button></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
+  var KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
+  var CHAVE = "gc2:etiquetas_publico", BUCKET = "fotos-manutencao", SESSAO_KEY = "etiquetas:admin:sessao";
+  var MOD = [["a3-1", "Cartela A3 – 1 (81 etiquetas, 4 tamanhos)", 24.9], ["a3-2", "Cartela A3 – 2 (80 etiquetas, 2 tamanhos)", 24.9], ["a4", "Cartela A4 (80 etiquetas, só lápis)", 19]];
+  var st = { sessao: null, usuario: "", dados: null, sujo: false };
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function msg(t, tipo) { $("msg").innerHTML = t ? '<div class="aviso ' + (tipo || "") + '">' + esc(t) + "</div>" : ""; if (t) window.scrollTo({ top: 0 }); }
+  function marcar(v) { st.sujo = v; $("sujo").textContent = v ? "Alterações não salvas" : ""; }
+  function uid() { return "et-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7); }
+  function timeout(ms) { var c = new AbortController(); setTimeout(function () { c.abort(); }, ms); return c.signal; }
+  function numPreco(v) { var s = String(v == null ? "" : v).trim().replace(/[^0-9,.-]/g, ""); if (!s) return null; var n = s.indexOf(",") >= 0 ? Number(s.replace(/\./g, "").replace(",", ".")) : Number(s); return isFinite(n) && n >= 0 ? n : null; }
+  function pv(n) { return Number(n).toFixed(2).replace(".", ","); }
+  function srcImg(u) { return /^(https:\/\/|temas\/)/.test(u || "") ? u : ""; }
+  function nomeDoArquivo(n) { var b = String(n || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim(); return b ? b.charAt(0).toUpperCase() + b.slice(1) : "Tema"; }
+
+  // ---- sessão ----
+  function emailDe(u) { return u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@vipgrafica.internal"; }
+  function tokenAuth(grant, corpo) {
+    return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=" + grant, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(corpo) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) { if (!x.ok || !x.d.access_token) throw new Error("Usuário ou senha incorretos."); return { access_token: x.d.access_token, refresh_token: x.d.refresh_token, expires_at: Date.now() + (Number(x.d.expires_in) || 3600) * 1000 }; });
+  }
+  function salvarSessao() { try { sessionStorage.setItem(SESSAO_KEY, JSON.stringify({ s: st.sessao, u: st.usuario })); } catch (e) {} }
+  function token() {
+    if (!st.sessao) return Promise.reject(new Error("Sessão encerrada. Entre de novo."));
+    if (st.sessao.expires_at - Date.now() > 60000) return Promise.resolve(st.sessao.access_token);
+    return tokenAuth("refresh_token", { refresh_token: st.sessao.refresh_token }).then(function (s) { st.sessao = s; salvarSessao(); return s.access_token; }, function () { sair(); throw new Error("Sessão expirada. Entre de novo."); });
+  }
+  function sair() { st.sessao = null; try { sessionStorage.removeItem(SESSAO_KEY); } catch (e) {} $("telaApp").classList.add("oculta"); $("telaLogin").classList.remove("oculta"); $("lPass").value = ""; }
+  function hdr(t, extra) { return Object.assign({ apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "application/json" }, extra || {}); }
+
+  // ---- dados ----
+  function carregar() {
+    return token().then(function (t) { return fetch(SUPABASE_URL + "/rest/v1/app_storage?key=eq." + encodeURIComponent(CHAVE) + "&select=value", { headers: hdr(t), signal: timeout(20000) }); })
+      .then(function (r) { if (!r.ok) throw new Error("Não consegui carregar (" + r.status + ")."); return r.json(); })
+      .then(function (rows) {
+        var v = rows[0] && rows[0].value; if (typeof v === "string") { try { v = JSON.parse(v); } catch (e) { v = null; } }
+        v = v || {}; var c = v.config || {}, e = v.etiquetas || {};
+        st.dados = { config: { nome: c.nome || "Vip Gráfica", whatsapp: c.whatsapp || "", rodape: c.rodape || "", logo: c.logo || null },
+          precos: Object.assign({}, e.precos || {}), temas: (Array.isArray(e.temas) ? e.temas : []).map(function (x) { return Object.assign({}, x); }) };
+        render(); marcar(false);
+      });
+  }
+  function render() {
+    var d = st.dados;
+    $("cNome").value = d.config.nome; $("cWa").value = d.config.whatsapp; $("cRod").value = d.config.rodape;
+    $("precos").innerHTML = MOD.map(function (m) { var v = d.precos[m[0]]; return '<label class="f">' + esc(m[1]) + '<input type="text" inputmode="decimal" data-ep="' + m[0] + '" value="' + pv(v != null ? v : m[2]) + '"></label>'; }).join("");
+    renderTemas();
+  }
+  function renderTemas() {
+    var l = st.dados.temas, cats = {}; l.forEach(function (t) { if (t.categoria) cats[t.categoria] = 1; });
+    $("listaCats").innerHTML = Object.keys(cats).map(function (c) { return '<option value="' + esc(c) + '">'; }).join("");
+    $("nTemas").textContent = "(" + l.length + ")";
+    $("temas").innerHTML = l.length ? l.map(function (t, i) {
+      return '<div class="tema' + (t.ativo === false ? " off" : "") + '"><img src="' + esc(srcImg(t.foto)) + '" alt="">' +
+        '<label class="f" style="flex:1;min-width:140px">Nome<input type="text" data-n="' + i + '" value="' + esc(t.nome) + '"></label>' +
+        '<label class="f" style="width:160px">Categoria<input type="text" data-c="' + i + '" list="listaCats" value="' + esc(t.categoria || "") + '"></label>' +
+        '<button class="btn sm" type="button" data-tog="' + i + '">' + (t.ativo === false ? "mostrar" : "ocultar") + '</button><button class="btn sm" type="button" data-del="' + i + '">excluir</button></div>';
+    }).join("") : '<p class="mut">Nenhum tema ainda. Use “+ Enviar temas”.</p>';
+  }
+  function coletar() {
+    var d = st.dados;
+    d.config.nome = $("cNome").value.trim() || "Vip Gráfica"; d.config.whatsapp = $("cWa").value.replace(/\D/g, ""); d.config.rodape = $("cRod").value.trim();
+    Array.prototype.forEach.call(document.querySelectorAll("[data-ep]"), function (i) { var n = numPreco(i.value); if (n != null) d.precos[i.getAttribute("data-ep")] = n; });
+  }
+  function salvar() {
+    coletar(); var d = st.dados, b = $("salvar"); b.disabled = true; msg("Salvando…");
+    var valor = { atualizadoEm: Date.now(), config: d.config, etiquetas: { precos: d.precos, temas: d.temas.filter(function (t) { return t && t.id && t.foto; }).map(function (t) { return { id: t.id, nome: String(t.nome || "").trim() || "Tema", categoria: String(t.categoria || "").trim(), foto: t.foto, ativo: t.ativo !== false }; }) } };
+    return token().then(function (t) { return fetch(SUPABASE_URL + "/rest/v1/app_storage", { method: "POST", headers: hdr(t, { Prefer: "resolution=merge-duplicates" }), body: JSON.stringify({ key: CHAVE, value: valor, shared: true, updated_at: new Date().toISOString() }), signal: timeout(20000) }); })
+      .then(function (r) { if (r.ok) { marcar(false); return msg("Salvo e publicado! O site já mostra as mudanças.", "ok"); } throw new Error(r.status === 401 || r.status === 403 ? "Sem permissão para salvar (precisa ser administrador)." : "Não consegui salvar (" + r.status + ")."); })
+      .then(function () { b.disabled = false; }, function (e) { b.disabled = false; msg(e.message, "erro"); });
+  }
+
+  // ---- upload de temas ----
+  function redimensionar(file, maxDim) {
+    return new Promise(function (res, rej) {
+      var rd = new FileReader();
+      rd.onload = function (e) { var img = new Image(); img.onload = function () { var w = img.width, h = img.height; if (w > maxDim || h > maxDim) { if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; } }
+        var c = document.createElement("canvas"); c.width = w; c.height = h; var cx = c.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h); c.toBlob(function (b) { b ? res(b) : rej(new Error("Não consegui processar a imagem.")); }, "image/jpeg", 0.88); };
+        img.onerror = function () { rej(new Error("Arquivo de imagem inválido.")); }; img.src = e.target.result; };
+      rd.onerror = function () { rej(new Error("Não consegui ler o arquivo.")); }; rd.readAsDataURL(file);
+    });
+  }
+  function enviarFoto(file) {
+    return redimensionar(file, 1000).then(function (blob) {
+      var nome = "etiqueta-tema-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+      return token().then(function (t) { return fetch(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + nome, { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "image/jpeg" }, body: blob, signal: timeout(30000) }); })
+        .then(function (r) { if (!r.ok) throw new Error("Não consegui enviar a imagem (" + r.status + ")."); return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + nome; });
+    });
+  }
+  function enviarTemas(arqs) {
+    var cat = $("eCatNova").value.trim(), n = 0, sp = $("eSt"); coletar();
+    return arqs.reduce(function (p, f) { return p.then(function () { sp.textContent = "Enviando " + (++n) + " de " + arqs.length + "…"; return enviarFoto(f).then(function (u) { st.dados.temas.push({ id: uid(), nome: nomeDoArquivo(f.name), categoria: cat, foto: u, ativo: true }); }); }); }, Promise.resolve())
+      .then(function () { sp.textContent = ""; renderTemas(); marcar(true); msg(arqs.length + " tema(s) adicionados. Ajuste os nomes e clique em “Salvar e publicar”.", "ok"); },
+        function (e) { sp.textContent = ""; renderTemas(); marcar(true); msg(e.message + " Os que já subiram estão na lista; clique em “Salvar e publicar”.", "erro"); });
+  }
+
+  // ---- eventos ----
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button"); if (!t) return; var v;
+    if ((v = t.getAttribute("data-tog")) !== null) { var te = st.dados.temas[Number(v)]; coletar(); te.ativo = te.ativo === false; marcar(true); return renderTemas(); }
+    if ((v = t.getAttribute("data-del")) !== null) { if (!confirm("Excluir este tema da lista?")) return; st.dados.temas.splice(Number(v), 1); marcar(true); return renderTemas(); }
+  });
+  document.addEventListener("input", function (e) {
+    var i = e.target, v; if (!st.dados) return;
+    if ((v = i.getAttribute && i.getAttribute("data-n")) !== null && v !== undefined) st.dados.temas[Number(v)].nome = i.value;
+    else if ((v = i.getAttribute && i.getAttribute("data-c")) !== null && v !== undefined) st.dados.temas[Number(v)].categoria = i.value;
+    if (i.closest && (i.closest(".card"))) marcar(true);
+  });
+  $("ordenar").onclick = function () { st.dados.temas.sort(function (a, b) { return String(a.categoria || "").localeCompare(String(b.categoria || ""), "pt-BR") || String(a.nome).localeCompare(String(b.nome), "pt-BR"); }); marcar(true); renderTemas(); };
+  $("arqs").addEventListener("change", function () { var l = Array.prototype.slice.call(this.files); this.value = ""; if (l.length) enviarTemas(l); });
+  $("salvar").onclick = salvar; $("sair").onclick = sair;
+  window.addEventListener("beforeunload", function (e) { if (st.sujo) { e.preventDefault(); e.returnValue = ""; } });
+  function entrar() { $("telaLogin").classList.add("oculta"); $("telaApp").classList.remove("oculta"); $("quem").textContent = st.usuario; carregar().catch(function (e) { msg(e.message, "erro"); }); }
+  $("fLogin").addEventListener("submit", function (e) {
+    e.preventDefault(); $("lErro").textContent = ""; var b = $("lBtn"); b.disabled = true; var u = $("lUser").value;
+    tokenAuth("password", { email: emailDe(u), password: $("lPass").value }).then(function (s) { st.sessao = s; st.usuario = u.trim().toLowerCase(); salvarSessao(); entrar(); }, function (er) { $("lErro").textContent = er.message; }).then(function () { b.disabled = false; });
+  });
+  var salva = null; try { salva = JSON.parse(sessionStorage.getItem(SESSAO_KEY) || "null"); } catch (e) {}
+  if (salva && salva.s) { st.sessao = salva.s; st.usuario = salva.u; entrar(); }
+})();
+</script>
+</body>
+</html>

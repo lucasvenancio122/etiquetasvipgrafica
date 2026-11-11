@@ -199,7 +199,7 @@
   var DEMO = /[?&]demo(=1|=true)?(&|$)/.test(location.search);
   var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
-  var CHAVE_PUBLICA = "gc2:catalogo_publico";
+  var CHAVE_PUBLICA = "gc2:catalogo_publico", CHAVE_ETQ = "gc2:etiquetas_publico";
   var LS = "etiquetas:pedido";
 
   // Modelos de cartela (formas e quantidades fixas — a gráfica não altera tamanhos nem quantidades)
@@ -258,15 +258,21 @@
   // ---------- carga ----------
   function carregar() {
     if (DEMO) { var d = dadosDemo(); estado.loja = d.config; estado.etq = d.etiquetas; return Promise.resolve(); }
-    return fetch(SUPABASE_URL + "/rest/v1/app_storage?key=eq." + encodeURIComponent(CHAVE_PUBLICA) + "&select=value", {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }, cache: "no-store"
-    }).then(function (r) { if (!r.ok) throw new Error("rede"); return r.json(); }).then(function (rows) {
-      var v = rows && rows[0] ? rows[0].value : null;
-      if (typeof v === "string") { try { v = JSON.parse(v); } catch (e) { v = null; } }
+    function busca(k) {
+      return fetch(SUPABASE_URL + "/rest/v1/app_storage?key=eq." + encodeURIComponent(k) + "&select=value", {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }, cache: "no-store"
+      }).then(function (r) { if (!r.ok) throw new Error("rede"); return r.json(); }).then(function (rows) {
+        var v = rows && rows[0] ? rows[0].value : null;
+        if (typeof v === "string") { try { v = JSON.parse(v); } catch (e) { v = null; } }
+        return v;
+      });
+    }
+    // dados próprios do site de etiquetas; se ainda não existirem, usa os do catálogo
+    return busca(CHAVE_ETQ).catch(function () { return null; }).then(function (v) { return v || busca(CHAVE_PUBLICA); }).then(function (v) {
       if (!v) throw new Error("vazio");
       estado.loja = v.config || {};
       var e = v.etiquetas || {};
-      estado.etq = { precos: e.precos && typeof e.precos === "object" ? e.precos : {}, temas: (Array.isArray(e.temas) ? e.temas : []).filter(function (t) { return t && t.id && t.nome && urlSegura(t.foto); }) };
+      estado.etq = { precos: e.precos && typeof e.precos === "object" ? e.precos : {}, temas: (Array.isArray(e.temas) ? e.temas : []).filter(function (t) { return t && t.id && t.nome && t.ativo !== false && urlSegura(t.foto); }) };
     });
   }
 
