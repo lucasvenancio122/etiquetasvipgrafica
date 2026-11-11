@@ -348,11 +348,11 @@
       '<label class="f">Série / turma (opcional)<input type="text" id="fSerie" maxlength="40" placeholder="Ex: Maternal 1" value="' + esc(estado.serie) + '"></label></div>' +
       '<label class="f">Observação (opcional)<textarea id="fObs" rows="2" maxlength="300" placeholder="Turma, escola, algum detalhe…">' + esc(estado.obs) + "</textarea></label>" +
       '<div class="acoes"><button class="btn sec" type="button" id="addOutro">+ Adicionar à lista e escolher outra cartela</button></div></div>' +
-      '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp. Aqui você só escolhe o modelo e o tema.</p>' +
+      '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp.</p>' +
       '<div class="dois"><label class="f">Seu nome *<input type="text" id="fCliente" maxlength="60" placeholder="Quem está fazendo o pedido" value="' + esc(estado.cliente) + '"></label>' +
       '<label class="f">Seu telefone (opcional)<input type="tel" id="fFone" maxlength="20" placeholder="(19) 99999-9999" value="' + esc(estado.fone) + '"></label></div>' +
-      '<p class="nota" style="margin-top:12px">Ao continuar, geramos a <b>via do pedido</b> (uma imagem) para você anexar na conversa do WhatsApp. É ela que a vendedora usa para montar sua arte.</p>' +
-      '<div class="acoes"><button class="btn wa" type="button" id="enviar">Gerar via e enviar pelo WhatsApp</button></div></div></div>';
+      '<p class="nota" style="margin-top:12px">Ao enviar, o pedido fica registrado com a nossa equipe e você finaliza pelo WhatsApp.</p>' +
+      '<div class="acoes"><button class="btn wa" type="button" id="enviar">Enviar pedido</button></div></div></div>';
     renderPassos(); renderLista(); window.scrollTo({ top: 0 });
   }
   function itemAtual() { return { modelo: estado.modelo, tema: estado.tema, qtd: estado.qtd, nome: estado.nome.trim(), serie: estado.serie.trim(), obs: estado.obs.trim() }; }
@@ -378,7 +378,7 @@
       if (i.serie) linhas.push("   Série: " + i.serie);
       if (i.obs) linhas.push("   Obs: " + i.obs);
     });
-    linhas.push("", "*Total: " + brl(s) + "*", "", "Pedido *" + codigoPedido() + "* — segue a via do pedido em anexo. 👇");
+    linhas.push("", "*Total: " + brl(s) + "*", "", "Pedido *" + codigoPedido() + "* — pode confirmar para mim, por favor? 🙂");
     return linhas.join("\n");
   }
   function codigoPedido() {
@@ -389,63 +389,50 @@
   function carregarImg(src) { return new Promise(function (res) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { res(null); }; im.src = src; }); }
   function quebra(ctx, txt, max) { var pal = String(txt).split(/\s+/), lin = [], at = ""; pal.forEach(function (w) { var t = at ? at + " " + w : w; if (ctx.measureText(t).width > max && at) { lin.push(at); at = w; } else at = t; }); if (at) lin.push(at); return lin; }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-  function gerarVia() {
-    var itens = listaCompleta().filter(function (i) { return modeloPor(i.modelo) && temaPor(i.tema); });
-    var fontes = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 30px Inter"), document.fonts.load("700 30px Inter"), document.fonts.load("700 30px Rowdies")]).catch(function () {}) : Promise.resolve();
-    return Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(fotoDe(temaPor(i.tema), i.modelo)); }))).then(function (r) {
-      var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
-      cv.width = W; var medir = ctx; medir.font = "600 26px Inter, sans-serif";
-      var alturas = itens.map(function (i) { var n = 4 + (i.obs ? quebra(medir, "Obs: " + i.obs, 520).length : 0); return Math.max(250, 70 + n * 38 + 24); });
-      var H = 330 + alturas.reduce(function (a, b) { return a + b + 20; }, 0) + 280; cv.height = H;
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
-      ctx.fillStyle = "#fff"; ctx.textBaseline = "alphabetic"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66);
-      ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
-      ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(codigoPedido(), W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText((estado.loja.nome || "Vip Gráfica"), W - P, 94); ctx.textAlign = "left";
-      var dt = new Date(), p2 = function (n) { return (n < 10 ? "0" : "") + n; };
-      ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + (estado.cliente.trim() || "—"), P, 168);
-      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560";
-      ctx.fillText("Telefone: " + (estado.fone.trim() || "(o do WhatsApp da conversa)"), P, 206); ctx.fillText("Data: " + p2(dt.getDate()) + "/" + p2(dt.getMonth() + 1) + "/" + dt.getFullYear() + " " + p2(dt.getHours()) + ":" + p2(dt.getMinutes()), P, 242);
-      ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, 266, W - 2 * P, 3);
-      var y = 296, total = 0;
-      itens.forEach(function (i, k) {
-        var m = modeloPor(i.modelo), t = temaPor(i.tema), h = alturas[k], sub = precoDe(m) * i.qtd; total += sub;
-        ctx.fillStyle = "#fff"; rr(ctx, P, y, W - 2 * P, h, 18); ctx.fill(); ctx.strokeStyle = "#CBD3E6"; ctx.lineWidth = 2; ctx.stroke();
-        if (imgs[k]) { ctx.save(); rr(ctx, P + 16, y + 16, 200, 200, 12); ctx.clip(); ctx.drawImage(imgs[k], P + 16, y + 16, 200, 200); ctx.restore(); ctx.strokeStyle = "#E1E7F3"; rr(ctx, P + 16, y + 16, 200, 200, 12); ctx.stroke(); }
-        var x = P + 244, yy = y + 52; ctx.fillStyle = "#D6231A"; ctx.font = "800 32px Inter, sans-serif"; ctx.fillText(i.qtd + "× " + m.nome, x, yy);
-        ctx.fillStyle = "#3B4560"; ctx.font = "600 24px Inter, sans-serif"; ctx.fillText(m.total + " etiquetas · " + m.tamanhos + (m.tamanhos === 1 ? " tamanho" : " tamanhos"), x, yy + 34);
-        ctx.fillStyle = "#101C3F"; ctx.font = "800 28px Inter, sans-serif"; yy += 76; ctx.fillText("Tema: " + t.nome, x, yy);
-        ctx.font = "700 26px Inter, sans-serif"; yy += 38; ctx.fillText("Nome: " + (i.nome || "—"), x, yy); yy += 38; ctx.fillText("Série/turma: " + (i.serie || "—"), x, yy);
-        if (i.obs) { ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; quebra(ctx, "Obs: " + i.obs, 520).forEach(function (l) { yy += 36; ctx.fillText(l, x, yy); }); }
-        ctx.textAlign = "right"; ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText(brl(sub), W - P - 20, y + 52); ctx.font = "600 20px Inter, sans-serif"; ctx.fillStyle = "#6B7385"; ctx.fillText(brl(precoDe(m)) + " cada", W - P - 20, y + 82); ctx.textAlign = "left";
-        y += h + 20;
-      });
-      ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(brl(total), W - P - 28, y + 56); ctx.textAlign = "left";
-      y += 130; ctx.fillStyle = "#3B4560"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Uso da vendedora:", P, y);
-      ctx.font = "600 24px Inter, sans-serif"; ctx.fillText("☐ Arte conferida     ☐ Pagamento     ☐ Impressão     ☐ Entregue", P, y + 42);
-      ctx.fillStyle = "#6B7385"; ctx.font = "600 20px Inter, sans-serif"; ctx.fillText("Pagamento e entrega combinados pelo WhatsApp.", P, y + 84); ctx.fillText("Não alteramos tamanhos e quantidades das cartelas.", P, y + 112);
-      return new Promise(function (res) { cv.toBlob(function (b) { res(b); }, "image/png"); });
+  function payloadPedido() {
+    var itens = [], total = 0;
+    listaCompleta().forEach(function (i) {
+      var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return;
+      var pr = precoDe(m); total += pr * i.qtd;
+      itens.push({ modelo: m.id, modeloNome: m.nome, etiquetas: m.total, tamanhos: m.tamanhos, preco: pr, qtd: i.qtd, tema: t.id, temaNome: t.nome, foto: fotoDe(t, m.id) || "", nome: i.nome, serie: i.serie, obs: i.obs });
+    });
+    return { itens: itens, total: Math.round(total * 100) / 100 };
+  }
+  function salvarPedido(tentativa) {
+    var p = payloadPedido();
+    return fetch(SUPABASE_URL + "/rest/v1/pedidos_etiquetas", {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ codigo: codigoPedido(), cliente: estado.cliente.trim(), telefone: estado.fone.trim() || null, itens: p.itens, total: p.total })
+    }).then(function (r) {
+      if (r.ok) return true;
+      if (r.status === 409 && (tentativa || 0) < 3) { estado.codigo = ""; return salvarPedido((tentativa || 0) + 1); }
+      throw new Error("HTTP " + r.status);
     });
   }
-  function abrirVia(blob) {
-    var url = URL.createObjectURL(blob), cod = codigoPedido(), arq = "via-" + cod + ".png", wa = numeroWa();
-    var f = null; try { f = new File([blob], arq, { type: "image/png" }); } catch (e) {}
-    var pode = !DEMO && f && navigator.canShare && navigator.canShare({ files: [f] });
-    var el = document.createElement("div"); el.id = "via";
-    el.innerHTML = '<div class="cx"><h3>Pedido ' + esc(cod) + ' pronto!</h3><ol class="passos-via"><li>' + (pode ? "Toque em <b>Compartilhar via</b> e escolha o WhatsApp (ou baixe a imagem)." : "Toque em <b>Baixar a via</b> para salvar a imagem.") + '</li><li>Toque em <b>Abrir conversa</b> e <b>anexe a via</b> na mensagem.</li></ol>' +
-      '<img class="pv" src="' + url + '" alt="Via do pedido ' + esc(cod) + '">' +
-      '<div class="acoes">' + (pode ? '<button class="btn wa" type="button" id="viaShare">Compartilhar via no WhatsApp</button>' : "") +
-      '<a class="btn ' + (pode ? "sec" : "wa") + '" id="viaBaixar" href="' + url + '" download="' + esc(arq) + '">Baixar a via</a>' +
-      '<button class="btn sec" type="button" id="viaAbrir">Abrir conversa no WhatsApp</button><button class="btn sec" type="button" id="viaFechar">Voltar ao pedido</button></div></div>';
+  function abrirWa() {
+    var wa = numeroWa();
+    if (DEMO) return toast("Na pré-visualização nada é enviado.");
+    if (!wa) return toast("WhatsApp da loja não cadastrado.");
+    window.open("https://wa.me/" + wa + "?text=" + encodeURIComponent(mensagem()), "_blank", "noopener");
+  }
+  function confirmacao(salvo) {
+    var cod = codigoPedido(), el = document.createElement("div"); el.id = "via";
+    el.innerHTML = '<div class="cx"><h3>' + (salvo ? "Pedido " + esc(cod) + " registrado!" : "Quase lá!") + '</h3>' +
+      (salvo ? '<p class="nota" style="font-size:15px">Seu pedido já está com a nossa equipe. <b>Falta só um passo:</b> toque no botão abaixo e envie a mensagem no WhatsApp para combinarmos pagamento e entrega.</p>'
+             : '<p class="nota" style="font-size:15px">Não conseguimos registrar o pedido agora, mas você pode enviar todos os detalhes pelo WhatsApp que a vendedora anota para você.</p>') +
+      '<div class="acoes"><button class="btn wa" type="button" id="viaAbrir">Enviar pelo WhatsApp</button><button class="btn sec" type="button" id="viaFechar">Fazer outro pedido</button></div></div>';
     document.body.appendChild(el);
-    $("viaFechar").onclick = function () { el.remove(); };
-    $("viaAbrir").onclick = function () { if (DEMO) return toast("Na pré-visualização nada é enviado."); if (!wa) return toast("WhatsApp da loja não cadastrado."); window.open("https://wa.me/" + wa + "?text=" + encodeURIComponent(mensagem()), "_blank", "noopener"); };
-    if (pode) $("viaShare").onclick = function () { navigator.share({ files: [f], text: mensagem() }).catch(function () {}); };
+    $("viaAbrir").onclick = abrirWa;
+    $("viaFechar").onclick = function () { el.remove(); estado.pedido = []; lsSet(LS, []); estado.codigo = ""; estado.nome = ""; estado.serie = ""; estado.obs = ""; estado.qtd = 1; estado.tema = null; viewModelos(); };
   }
   function enviar() {
-    if (!estado.cliente.trim()) { toast("Informe o seu nome para gerar a via."); var c = $("fCliente"); if (c) c.focus(); return; }
-    var b = $("enviar"); b.disabled = true; b.textContent = "Gerando a via…";
-    gerarVia().then(function (blob) { b.disabled = false; b.textContent = "Gerar via e enviar pelo WhatsApp"; if (!blob) return toast("Não consegui gerar a via. Tente de novo."); lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone }); abrirVia(blob); }, function () { b.disabled = false; b.textContent = "Gerar via e enviar pelo WhatsApp"; toast("Não consegui gerar a via. Tente de novo."); });
+    if (!estado.cliente.trim()) { toast("Informe o seu nome para enviar o pedido."); var c = $("fCliente"); if (c) c.focus(); return; }
+    var b = $("enviar"), txt = b.textContent; b.disabled = true; b.textContent = "Enviando o pedido…";
+    lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone });
+    var fim = function (ok) { b.disabled = false; b.textContent = txt; confirmacao(ok); };
+    if (DEMO) return fim(true);
+    salvarPedido(0).then(function () { fim(true); }, function () { fim(false); });
   }
 
   // ---------- eventos ----------

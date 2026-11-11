@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Pedidos de etiquetas | Vip Gráfica</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" />
+<style>
+  :root { --bg:#F3F7FF; --ink:#101C3F; --ink-2:#3B4560; --line:#E1E7F3; --grey:#6B7385; --brand:#E5332B; --ok:#1FA855; --display:"Rowdies","Inter",system-ui,sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Inter",system-ui,sans-serif; }
+  button,input,select,textarea { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  .oculta { display:none !important; }
+  header { background:#fff; border-bottom:3px solid var(--brand); padding:10px 18px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:5; }
+  header h1 { font-family:var(--display); font-size:19px; margin:0; flex:1; }
+  .btn { border:1px solid var(--ink); background:#fff; border-radius:8px; padding:9px 14px; font-weight:600; font-size:14px; }
+  .btn:hover { background:var(--ink); color:#fff; }
+  .btn.p { background:var(--ink); color:#fff; }
+  .btn.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
+  .wrap { max-width:960px; margin:0 auto; padding:16px 18px 60px; }
+  .login { max-width:360px; margin:60px auto; background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:0 8px 24px rgba(16,28,63,.08); }
+  .login h2 { font-family:var(--display); margin:0 0 4px; }
+  label.f { display:block; font-weight:600; font-size:13px; margin-top:12px; }
+  input,select,textarea { width:100%; border:1px solid #CBD3E6; border-radius:8px; padding:10px 12px; background:#fff; margin-top:4px; }
+  .erro { color:#C42A23; font-weight:600; margin-top:10px; min-height:20px; }
+  .barra { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; align-items:center; }
+  .barra input { flex:1; min-width:180px; margin:0; }
+  .chip { border:1px solid #CBD3E6; background:#fff; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:600; }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .ped { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(16,28,63,.05); }
+  .ped.novo { border-left:6px solid var(--brand); }
+  .topo { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline; }
+  .cod { font-weight:800; font-size:17px; }
+  .cli { font-weight:700; }
+  .mut { color:var(--grey); font-size:13px; }
+  .st { font-size:12px; font-weight:800; border-radius:999px; padding:3px 10px; background:#E1E7F3; text-transform:uppercase; letter-spacing:.3px; }
+  .st.novo { background:var(--brand); color:#fff; } .st.pago,.st.entregue { background:#D6F3E1; color:#0F6B36; } .st.cancelado { background:#eee; color:#777; }
+  .itens { margin:10px 0; display:grid; gap:8px; }
+  .it { display:flex; gap:12px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:8px; }
+  .it img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex:none; background:#f2f2f2; }
+  .it > div > b:first-child { display:block; } .it span { color:var(--ink-2); font-size:13.5px; }
+  .acoes { display:flex; flex-wrap:wrap; gap:8px; align-items:end; margin-top:10px; }
+  .acoes label { flex:1; min-width:150px; margin:0; font-size:12px; }
+  .vazio { text-align:center; color:var(--grey); padding:40px 0; }
+  .ver { font-weight:700; color:var(--brand); }
+  #via { display:none; }
+  @media print {
+    body { background:#fff; }
+    body > *:not(#via) { display:none !important; }
+    #via { display:block; padding:0; }
+    .vh { background:#E5332B !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+  #via .vh { background:#E5332B; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; }
+  #via h2 { margin:0; font-family:var(--display); font-size:22px; }
+  #via .vc { padding:12px 18px; font-size:15px; }
+  #via .vi { display:flex; gap:14px; border:1px solid #CBD3E6; border-radius:10px; padding:10px; margin:10px 18px; }
+  #via .vi img { width:110px; height:110px; object-fit:cover; border-radius:8px; }
+  #via .vt { margin:14px 18px; background:#101C3F; color:#fff; border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; font-weight:800; font-size:20px; }
+  #via .vu { margin:14px 18px; font-size:15px; }
+</style>
+</head>
+<body>
+<div id="telaLogin" class="login">
+  <h2>Pedidos de etiquetas</h2>
+  <p class="mut">Área da equipe Vip Gráfica. Entre com o seu usuário do sistema.</p>
+  <form id="fLogin">
+    <label class="f">Usuário<input id="lUser" autocomplete="username" autocapitalize="none" required></label>
+    <label class="f">Senha<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <div class="erro" id="lErro"></div>
+    <button class="btn p" style="width:100%" id="lBtn">Entrar</button>
+  </form>
+</div>
+
+<div id="telaApp" class="oculta">
+  <header><h1>Pedidos de etiquetas</h1><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
+  <div class="wrap">
+    <div class="barra"><input id="busca" placeholder="Buscar por código, cliente ou telefone…"></div>
+    <div class="barra" id="chips"></div>
+    <div id="lista"></div>
+  </div>
+</div>
+<div id="via"></div>
+
+<script>
+(function () {
+  "use strict";
+  var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
+  var KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
+  var SESSAO_KEY = "etiquetas:pedidos:sessao";
+  var STATUS = [["novo","Novo"],["arte","Arte conferida"],["pago","Pago"],["impresso","Impresso"],["entregue","Entregue"],["cancelado","Cancelado"]];
+  var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null };
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function dataBr(iso) { var d = new Date(iso); return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
+  function stNome(s) { for (var i = 0; i < STATUS.length; i++) if (STATUS[i][0] === s) return STATUS[i][1]; return s; }
+  function imgSeg(u) { u = String(u || ""); return /^(https:\/\/|temas\/[A-Za-z0-9\/_.-]+\.(jpg|png)$)/.test(u) ? u : ""; }
+
+  // ---- sessão (mesmos usuários do sistema, sessão própria desta página) ----
+  function emailDe(u) { return u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@vipgrafica.internal"; }
+  function tokenAuth(grant, corpo) {
+    return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=" + grant, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(corpo) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        if (!x.ok || !x.d.access_token) throw new Error("Usuário ou senha incorretos.");
+        return { access_token: x.d.access_token, refresh_token: x.d.refresh_token, expires_at: Date.now() + (Number(x.d.expires_in) || 3600) * 1000 };
+      });
+  }
+  function salvarSessao() { try { sessionStorage.setItem(SESSAO_KEY, JSON.stringify({ s: st.sessao, u: st.usuario })); } catch (e) {} }
+  function token() {
+    if (!st.sessao) return Promise.reject(new Error("Sessão encerrada."));
+    if (st.sessao.expires_at - Date.now() > 60000) return Promise.resolve(st.sessao.access_token);
+    return tokenAuth("refresh_token", { refresh_token: st.sessao.refresh_token }).then(function (s) { st.sessao = s; salvarSessao(); return s.access_token; }, function () { sair(); throw new Error("Sessão expirada."); });
+  }
+  function api(metodo, caminho, corpo) {
+    return token().then(function (t) {
+      return fetch(SUPABASE_URL + "/rest/v1/" + caminho, { method: metodo, headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "application/json", Prefer: "return=representation" }, body: corpo ? JSON.stringify(corpo) : undefined });
+    }).then(function (r) { if (!r.ok) throw new Error("Erro " + r.status); return r.json(); });
+  }
+  function sair() { st.sessao = null; clearInterval(st.timer); try { sessionStorage.removeItem(SESSAO_KEY); } catch (e) {} $("telaApp").classList.add("oculta"); $("telaLogin").classList.remove("oculta"); $("lPass").value = ""; }
+  function entrar() {
+    $("telaLogin").classList.add("oculta"); $("telaApp").classList.remove("oculta"); $("quem").textContent = st.usuario;
+    montarChips(); carregar(); clearInterval(st.timer); st.timer = setInterval(carregar, 60000);
+  }
+  $("fLogin").addEventListener("submit", function (e) {
+    e.preventDefault(); $("lErro").textContent = ""; var b = $("lBtn"); b.disabled = true;
+    var u = $("lUser").value;
+    tokenAuth("password", { email: emailDe(u), password: $("lPass").value }).then(function (s) { st.sessao = s; st.usuario = u.trim().toLowerCase(); salvarSessao(); entrar(); },
+      function (er) { $("lErro").textContent = er.message; }).then(function () { b.disabled = false; });
+  });
+  $("sair").onclick = sair;
+  $("atualizar").onclick = carregar;
+
+  // ---- lista ----
+  function carregar() {
+    api("GET", "pedidos_etiquetas?select=*&order=criado_em.desc&limit=300").then(function (l) { st.pedidos = l; render(); },
+      function (er) { $("lista").innerHTML = '<div class="vazio">Não consegui carregar os pedidos (' + esc(er.message) + ').</div>'; });
+  }
+  function montarChips() {
+    var fs = [["ativos", "Em andamento"], ["todos", "Todos"]].concat(STATUS);
+    $("chips").innerHTML = fs.map(function (f) { return '<button type="button" class="chip' + (st.filtro === f[0] ? " on" : "") + '" data-f="' + f[0] + '">' + f[1] + "</button>"; }).join("");
+  }
+  function visiveis() {
+    var q = st.busca.trim().toLowerCase();
+    return st.pedidos.filter(function (p) {
+      if (st.filtro === "ativos" ? (p.status === "entregue" || p.status === "cancelado") : (st.filtro !== "todos" && p.status !== st.filtro)) return false;
+      return !q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  function render() {
+    var l = visiveis();
+    if (!l.length) { $("lista").innerHTML = '<div class="vazio">Nenhum pedido por aqui.</div>'; return; }
+    $("lista").innerHTML = l.map(function (p) {
+      var itens = (p.itens || []).map(function (i) {
+        var im = imgSeg(i.foto);
+        return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + brl(i.preco) + " cada" +
+          (i.nome ? "<br>Nome: <b>" + esc(i.nome) + "</b>" : "") + (i.serie ? " · Série: <b>" + esc(i.serie) + "</b>" : "") + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</span></div></div>";
+      }).join("");
+      var op = STATUS.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === p.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
+      var fone = (p.telefone || "").replace(/\D/g, "");
+      return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span><span class="st ' + esc(p.status) + '">' + esc(stNome(p.status)) + '</span><b style="margin-left:auto">' + brl(p.total) + "</b></div>" +
+        '<div class="itens">' + itens + '</div><div class="acoes"><label>Situação<select data-st>' + op + '</select></label><label>Anotação interna<input data-nota maxlength="500" value="' + esc(p.nota || "") + '" placeholder="Ex: arte enviada, aguardando pagamento"></label>' +
+        '<button class="btn" type="button" data-sv>Salvar</button><button class="btn" type="button" data-png>Baixar via (imagem)</button><button class="btn p" type="button" data-print>Imprimir via</button></div></div>';
+    }).join("");
+  }
+  document.addEventListener("click", function (e) {
+    var c = e.target.closest(".chip"); if (c) { st.filtro = c.getAttribute("data-f"); montarChips(); return render(); }
+    var card = e.target.closest(".ped"); if (!card) return;
+    var p = st.pedidos.filter(function (x) { return x.id === card.getAttribute("data-id"); })[0]; if (!p) return;
+    if (e.target.closest("[data-sv]")) {
+      var b = e.target.closest("[data-sv]"); b.disabled = true;
+      api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), { status: card.querySelector("[data-st]").value, nota: card.querySelector("[data-nota]").value.trim() || null, atualizado_em: new Date().toISOString() })
+        .then(function (r) { if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render(); }, function () { b.disabled = false; alert("Não consegui salvar. Tente de novo."); });
+    }
+    if (e.target.closest("[data-print]")) imprimir(p);
+    if (e.target.closest("[data-png]")) baixarPng(p);
+  });
+  $("busca").addEventListener("input", function () { st.busca = this.value; render(); });
+
+  // ---- via ----
+  function imprimir(p) {
+    var itens = (p.itens || []).map(function (i) {
+      var im = imgSeg(i.foto);
+      return '<div class="vi">' + (im ? '<img src="' + esc(im) + '" alt="">' : "") + '<div><b style="font-size:18px">' + esc(i.qtd) + "× " + esc(i.modeloNome) + "</b><br>" + esc(i.etiquetas) + " etiquetas · " + brl(i.preco) + " cada<br><b>Tema: " + esc(i.temaNome) + "</b><br>Nome: <b>" + esc(i.nome || "—") + "</b><br>Série/turma: <b>" + esc(i.serie || "—") + "</b>" + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</div></div>";
+    }).join("");
+    $("via").innerHTML = '<div class="vh"><div><h2>VIA DO PEDIDO</h2>Etiquetas escolares · vinil</div><div style="text-align:right"><b style="font-size:22px">' + esc(p.codigo) + "</b><br>Vip Gráfica</div></div>" +
+      '<div class="vc"><b style="font-size:20px">Cliente: ' + esc(p.cliente) + "</b><br>Telefone: " + esc(p.telefone || "—") + "<br>Data: " + dataBr(p.criado_em) + (p.nota ? "<br>Anotação: " + esc(p.nota) : "") + "</div>" + itens +
+      '<div class="vt"><span>TOTAL DO PEDIDO</span><span>' + brl(p.total) + '</span></div><div class="vu"><b>Uso da vendedora:</b><br>☐ Arte conferida &nbsp; ☐ Pagamento &nbsp; ☐ Impressão &nbsp; ☐ Entregue</div>';
+    var imgs = $("via").querySelectorAll("img"), falta = imgs.length;
+    if (!falta) return window.print();
+    var fim = function () { if (--falta <= 0) window.print(); };
+    Array.prototype.forEach.call(imgs, function (im) { if (im.complete) fim(); else { im.onload = fim; im.onerror = fim; } });
+  }
+  function carregarImg(src) { return new Promise(function (res) { if (!src) return res(null); var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { res(null); }; im.src = src; }); }
+  function quebra(ctx, txt, max) { var pal = String(txt).split(/\s+/), lin = [], at = ""; pal.forEach(function (w) { var t = at ? at + " " + w : w; if (ctx.measureText(t).width > max && at) { lin.push(at); at = w; } else at = t; }); if (at) lin.push(at); return lin; }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function baixarPng(p) {
+    var itens = p.itens || [];
+    var fontes = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 30px Inter"), document.fonts.load("700 30px Rowdies")]).catch(function () {}) : Promise.resolve();
+    Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(imgSeg(i.foto)); }))).then(function (r) {
+      var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+      cv.width = W; ctx.font = "600 24px Inter, sans-serif";
+      var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0)) * 38 + 24); });
+      var extra = p.nota ? 40 : 0, H = 330 + extra + alt.reduce(function (a, b) { return a + b + 20; }, 0) + 220; cv.height = H;
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
+      ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
+      ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
+      ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + p.cliente, P, 168);
+      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—"), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
+      if (p.nota) ctx.fillText("Anotação: " + p.nota, P, 278);
+      var y = 296 + extra; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
+      itens.forEach(function (i, k) {
+        var h = alt[k], sub = i.preco * i.qtd;
+        ctx.fillStyle = "#fff"; rr(ctx, P, y, W - 2 * P, h, 18); ctx.fill(); ctx.strokeStyle = "#CBD3E6"; ctx.lineWidth = 2; ctx.stroke();
+        if (imgs[k]) { ctx.save(); rr(ctx, P + 16, y + 16, 200, 200, 12); ctx.clip(); ctx.drawImage(imgs[k], P + 16, y + 16, 200, 200); ctx.restore(); }
+        var x = P + 244, yy = y + 52; ctx.fillStyle = "#D6231A"; ctx.font = "800 32px Inter, sans-serif"; ctx.fillText(i.qtd + "× " + i.modeloNome, x, yy);
+        ctx.fillStyle = "#3B4560"; ctx.font = "600 24px Inter, sans-serif"; ctx.fillText(i.etiquetas + " etiquetas · " + i.tamanhos + (i.tamanhos === 1 ? " tamanho" : " tamanhos"), x, yy + 34);
+        ctx.fillStyle = "#101C3F"; ctx.font = "800 28px Inter, sans-serif"; yy += 76; ctx.fillText("Tema: " + i.temaNome, x, yy);
+        ctx.font = "700 26px Inter, sans-serif"; yy += 38; ctx.fillText("Nome: " + (i.nome || "—"), x, yy); yy += 38; ctx.fillText("Série/turma: " + (i.serie || "—"), x, yy);
+        if (i.obs) { ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; quebra(ctx, "Obs: " + i.obs, 520).forEach(function (l) { yy += 36; ctx.fillText(l, x, yy); }); }
+        ctx.textAlign = "right"; ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText(brl(sub), W - P - 20, y + 52); ctx.font = "600 20px Inter, sans-serif"; ctx.fillStyle = "#6B7385"; ctx.fillText(brl(i.preco) + " cada", W - P - 20, y + 82); ctx.textAlign = "left";
+        y += h + 20;
+      });
+      ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(brl(p.total), W - P - 28, y + 56); ctx.textAlign = "left";
+      y += 130; ctx.fillStyle = "#3B4560"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Uso da vendedora:", P, y); ctx.font = "600 24px Inter, sans-serif"; ctx.fillText("☐ Arte conferida     ☐ Pagamento     ☐ Impressão     ☐ Entregue", P, y + 42);
+      cv.toBlob(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "via-" + p.codigo + ".png"; document.body.appendChild(a); a.click(); a.remove(); }, "image/png");
+    });
+  }
+
+  var salva = null; try { salva = JSON.parse(sessionStorage.getItem(SESSAO_KEY) || "null"); } catch (e) {}
+  if (salva && salva.s) { st.sessao = salva.s; st.usuario = salva.u; entrar(); }
+})();
+</script>
+</body>
+</html>
