@@ -223,7 +223,7 @@
   function urlSegura(u) {
     if (typeof u !== "string") return "";
     if (/^https:\/\//i.test(u)) return u;
-    if (/^temas\/[a-z0-9._-]+\.(jpg|png)$/i.test(u)) return u;
+    if (/^temas\/(a3-2\/|a4\/)?[a-z0-9._-]+\.(jpg|png)$/i.test(u)) return u;
     if (DEMO && /^data:image\/svg\+xml/i.test(u)) return u;
     return "";
   }
@@ -234,6 +234,15 @@
   function numeroWa() { var d = String(estado.loja.whatsapp || "").replace(/\D/g, ""); if (!d) return ""; if (d.length <= 11) d = "55" + d; return d; }
   function modeloPor(id) { for (var i = 0; i < MODELOS.length; i++) if (MODELOS[i].id === id) return MODELOS[i]; return null; }
   function precoDe(m) { var p = estado.etq.precos && estado.etq.precos[m.id]; return p != null && isFinite(Number(p)) && Number(p) >= 0 ? Number(p) : m.preco; }
+  // Cada cartela mostra só os tamanhos que ela realmente tem (A3-2: lápis + 6x4; A4: só lápis)
+  function fotoDe(t, modeloId) {
+    var f = urlSegura(t.foto), pasta = modeloId === "a3-2" ? "a3-2" : (modeloId === "a4" ? "a4" : "");
+    return pasta && /^temas\/[^\/]+$/.test(f) ? f.replace(/^temas\//, "temas/" + pasta + "/") : f;
+  }
+  function imgTema(t, modeloId, alt, extra) {
+    var orig = urlSegura(t.foto), f = fotoDe(t, modeloId);
+    return '<img src="' + esc(f) + '" alt="' + esc(alt) + '"' + (extra || "") + (f !== orig ? ' onerror="this.onerror=null;this.src=\'' + esc(orig) + '\'"' : "") + " />";
+  }
   function temaPor(id) { var l = estado.etq.temas; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
 
   // ---------- demo ----------
@@ -316,7 +325,7 @@
     var box = $("temas"); if (!box) return;
     var l = temasFiltrados();
     box.innerHTML = l.length ? l.map(function (t) {
-      return '<button class="tema' + (estado.tema === t.id ? " sel" : "") + '" type="button" data-tema="' + esc(t.id) + '"><div class="im"><img src="' + esc(urlSegura(t.foto)) + '" alt="' + esc(t.nome) + '" loading="lazy" /></div><div class="nm">' + esc(t.nome) + "</div></button>";
+      return '<button class="tema' + (estado.tema === t.id ? " sel" : "") + '" type="button" data-tema="' + esc(t.id) + '"><div class="im">' + imgTema(t, estado.modelo, t.nome, ' loading="lazy"') + '</div><div class="nm">' + esc(t.nome) + "</div></button>";
     }).join("") : '<p class="sub" style="grid-column:1/-1">Nenhum tema encontrado.</p>';
   }
   function barra(on) { $("barra").classList[on ? "add" : "remove"]("show"); }
@@ -333,7 +342,7 @@
     var m = modeloPor(estado.modelo), t = temaPor(estado.tema);
     if (!m || !t) return viewTemas();
     $("app").innerHTML = '<button class="voltar" type="button" id="vTema">← Trocar tema</button><h2 class="tit">3. Finalizar</h2><p class="sub">Confira, adicione o nome se quiser e envie o pedido pelo WhatsApp.</p>' +
-      '<div class="final"><div class="caixa"><div class="prev"><img src="' + esc(urlSegura(t.foto)) + '" alt="' + esc(t.nome) + '" /><div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + brl(precoDe(m)) + " cada cartela</p></div></div>" +
+      '<div class="final"><div class="caixa"><div class="prev">' + imgTema(t, m.id, t.nome) + '<div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + brl(precoDe(m)) + " cada cartela</p></div></div>" +
       '<label class="f">Quantidade de cartelas<br><span class="qtd"><button type="button" id="menos" aria-label="Menos">−</button><span id="qv">' + estado.qtd + '</span><button type="button" id="mais" aria-label="Mais">+</button></span></label>' +
       '<div class="dois"><label class="f">Nome nas etiquetas (opcional)<input type="text" id="fNome" maxlength="60" placeholder="Ex: Maria Clara" value="' + esc(estado.nome) + '"></label>' +
       '<label class="f">Série / turma (opcional)<input type="text" id="fSerie" maxlength="40" placeholder="Ex: Maternal 1" value="' + esc(estado.serie) + '"></label></div>' +
@@ -352,7 +361,7 @@
     var l = listaCompleta();
     $("listaPed").innerHTML = l.map(function (i, k) {
       var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return "";
-      return '<div class="item-ped"><img src="' + esc(urlSegura(t.foto)) + '" alt=""><div class="t"><b>' + i.qtd + "× " + esc(m.nome) + "</b><span>" + esc(t.nome) + (i.nome ? " · " + esc(i.nome) : "") + (i.serie ? " · " + esc(i.serie) : "") + "</span></div>" +
+      return '<div class="item-ped">' + imgTema(t, i.modelo, "") + '<div class="t"><b>' + i.qtd + "× " + esc(m.nome) + "</b><span>" + esc(t.nome) + (i.nome ? " · " + esc(i.nome) : "") + (i.serie ? " · " + esc(i.serie) : "") + "</span></div>" +
         '<div style="font-weight:800;font-size:13.5px">' + brl(precoDe(m) * i.qtd) + "</div>" + (k < estado.pedido.length ? '<button class="x" type="button" data-rem="' + k + '" aria-label="Remover">×</button>' : "") + "</div>";
     }).join("");
     var s = 0; l.forEach(function (i) { var m = modeloPor(i.modelo); if (m) s += precoDe(m) * i.qtd; });
@@ -383,7 +392,7 @@
   function gerarVia() {
     var itens = listaCompleta().filter(function (i) { return modeloPor(i.modelo) && temaPor(i.tema); });
     var fontes = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 30px Inter"), document.fonts.load("700 30px Inter"), document.fonts.load("700 30px Rowdies")]).catch(function () {}) : Promise.resolve();
-    return Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(urlSegura(temaPor(i.tema).foto)); }))).then(function (r) {
+    return Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(fotoDe(temaPor(i.tema), i.modelo)); }))).then(function (r) {
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; var medir = ctx; medir.font = "600 26px Inter, sans-serif";
       var alturas = itens.map(function (i) { var n = 4 + (i.obs ? quebra(medir, "Obs: " + i.obs, 520).length : 0); return Math.max(250, 70 + n * 38 + 24); });
