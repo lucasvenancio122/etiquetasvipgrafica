@@ -351,7 +351,7 @@
     $("app").innerHTML = '<button class="voltar" type="button" id="vTema">← Trocar tema</button><h2 class="tit">3. Finalizar</h2><p class="sub">Confira, adicione o nome se quiser e envie o pedido pelo WhatsApp.</p>' +
       '<div class="final"><div class="caixa"><div class="prev">' + imgTema(t, m.id, t.nome) + '<div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + brl(precoDe(m)) + " cada cartela</p></div></div>" +
       '<label class="f">Quantidade de cartelas<br><span class="qtd"><button type="button" id="menos" aria-label="Menos">−</button><span id="qv">' + estado.qtd + '</span><button type="button" id="mais" aria-label="Mais">+</button></span></label>' +
-      '<div class="dois"><label class="f">Nome nas etiquetas (opcional)<input type="text" id="fNome" maxlength="60" placeholder="Ex: Maria Clara" value="' + esc(estado.nome) + '"></label>' +
+      '<div class="dois"><label class="f">Nome nas etiquetas *<input type="text" id="fNome" maxlength="60" placeholder="Ex: Maria Clara" value="' + esc(estado.nome) + '"></label>' +
       '<label class="f">Série / turma (opcional)<input type="text" id="fSerie" maxlength="40" placeholder="Ex: Maternal 1" value="' + esc(estado.serie) + '"></label></div>' +
       '<label class="f">Observação (opcional)<textarea id="fObs" rows="2" maxlength="300" placeholder="Turma, escola, algum detalhe…">' + esc(estado.obs) + "</textarea></label>" +
       '<div class="acoes"><button class="btn sec" type="button" id="addOutro">+ Adicionar à lista e escolher outra cartela</button></div></div>' +
@@ -433,7 +433,9 @@
     $("viaAbrir").onclick = abrirWa;
     $("viaFechar").onclick = function () { el.remove(); estado.pedido = []; lsSet(LS, []); estado.codigo = ""; estado.nome = ""; estado.serie = ""; estado.obs = ""; estado.qtd = 1; estado.tema = null; viewModelos(); };
   }
+  function pedeNome() { toast("Informe o nome que vai nas etiquetas."); var n = $("fNome"); if (n) { n.focus(); n.scrollIntoView({ block: "center", behavior: "smooth" }); n.style.borderColor = "#E5332B"; } }
   function enviar() {
+    if (!estado.nome.trim()) return pedeNome();
     if (!estado.cliente.trim()) { toast("Informe o seu nome para enviar o pedido."); var c = $("fCliente"); if (c) c.focus(); return; }
     var b = $("enviar"), txt = b.textContent; b.disabled = true; b.textContent = "Enviando o pedido…";
     lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone });
@@ -455,7 +457,7 @@
     if (t.id === "vTema") return viewTemas();
     if (t.id === "mais") { estado.qtd = Math.min(50, estado.qtd + 1); $("qv").textContent = estado.qtd; return renderLista(); }
     if (t.id === "menos") { estado.qtd = Math.max(1, estado.qtd - 1); $("qv").textContent = estado.qtd; return renderLista(); }
-    if (t.id === "addOutro") { estado.pedido.push(itemAtual()); lsSet(LS, estado.pedido); estado.tema = null; estado.modelo = null; estado.qtd = 1; estado.obs = ""; toast("Adicionado ao seu pedido."); return viewModelos(); }
+    if (t.id === "addOutro") { if (!estado.nome.trim()) return pedeNome(); estado.pedido.push(itemAtual()); lsSet(LS, estado.pedido); estado.tema = null; estado.modelo = null; estado.qtd = 1; estado.obs = ""; toast("Adicionado ao seu pedido."); return viewModelos(); }
     if (t.id === "enviar") return enviar();
     if (t.id === "abrirPedido") {
       if (!(estado.modelo && estado.tema) && estado.pedido.length) { var u = estado.pedido.pop(); estado.modelo = u.modelo; estado.tema = u.tema; estado.qtd = u.qtd; estado.nome = u.nome; estado.serie = u.serie || ""; estado.obs = u.obs; lsSet(LS, estado.pedido); }
@@ -464,7 +466,7 @@
   });
   document.addEventListener("input", function (e) {
     if (e.target.id === "buscaTema") { estado.busca = e.target.value; return renderTemas(); }
-    if (e.target.id === "fNome") { estado.nome = e.target.value; return renderLista(); }
+    if (e.target.id === "fNome") { estado.nome = e.target.value; e.target.style.borderColor = ""; return renderLista(); }
     if (e.target.id === "fSerie") { estado.serie = e.target.value; return renderLista(); }
     if (e.target.id === "fCliente") { estado.cliente = e.target.value; return; }
     if (e.target.id === "fFone") { estado.fone = e.target.value; return; }
