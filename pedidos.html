@@ -45,20 +45,6 @@
   .acoes label { flex:1; min-width:150px; margin:0; font-size:12px; }
   .vazio { text-align:center; color:var(--grey); padding:40px 0; }
   .ver { font-weight:700; color:var(--brand); }
-  #via { display:none; }
-  @media print {
-    body { background:#fff; }
-    body > *:not(#via) { display:none !important; }
-    #via { display:block; padding:0; }
-    .vh { background:#E5332B !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  }
-  #via .vh { background:#E5332B; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; }
-  #via h2 { margin:0; font-family:var(--display); font-size:22px; }
-  #via .vc { padding:12px 18px; font-size:15px; }
-  #via .vi { display:flex; gap:14px; border:1px solid #CBD3E6; border-radius:10px; padding:10px; margin:10px 18px; }
-  #via .vi img { width:110px; height:110px; object-fit:cover; border-radius:8px; }
-  #via .vt { margin:14px 18px; background:#101C3F; color:#fff; border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; font-weight:800; font-size:20px; }
-  #via .vu { margin:14px 18px; font-size:15px; }
 </style>
 </head>
 <body>
@@ -76,12 +62,10 @@
 <div id="telaApp" class="oculta">
   <header><h1>Pedidos de etiquetas</h1><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
   <div class="wrap">
-    <div class="barra"><input id="busca" placeholder="Buscar por código, cliente ou telefone…"></div>
-    <div class="barra" id="chips"></div>
+    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"></div>
     <div id="lista"></div>
   </div>
 </div>
-<div id="via"></div>
 
 <script>
 (function () {
@@ -123,7 +107,7 @@
   function sair() { st.sessao = null; clearInterval(st.timer); try { sessionStorage.removeItem(SESSAO_KEY); } catch (e) {} $("telaApp").classList.add("oculta"); $("telaLogin").classList.remove("oculta"); $("lPass").value = ""; }
   function entrar() {
     $("telaLogin").classList.add("oculta"); $("telaApp").classList.remove("oculta"); $("quem").textContent = st.usuario;
-    montarChips(); carregar(); clearInterval(st.timer); st.timer = setInterval(carregar, 60000);
+    carregar(); clearInterval(st.timer); st.timer = setInterval(carregar, 60000);
   }
   $("fLogin").addEventListener("submit", function (e) {
     e.preventDefault(); $("lErro").textContent = ""; var b = $("lBtn"); b.disabled = true;
@@ -139,16 +123,10 @@
     api("GET", "pedidos_etiquetas?select=*&order=criado_em.desc&limit=300").then(function (l) { st.pedidos = l; render(); },
       function (er) { $("lista").innerHTML = '<div class="vazio">Não consegui carregar os pedidos (' + esc(er.message) + ').</div>'; });
   }
-  function montarChips() {
-    var fs = [["ativos", "Em andamento"], ["todos", "Todos"]].concat(STATUS);
-    $("chips").innerHTML = fs.map(function (f) { return '<button type="button" class="chip' + (st.filtro === f[0] ? " on" : "") + '" data-f="' + f[0] + '">' + f[1] + "</button>"; }).join("");
-  }
+  var baixadas = {}; try { baixadas = JSON.parse(localStorage.getItem("etiquetas:baixadas") || "{}"); } catch (e) {}
   function visiveis() {
     var q = st.busca.trim().toLowerCase();
-    return st.pedidos.filter(function (p) {
-      if (st.filtro === "ativos" ? (p.status === "entregue" || p.status === "cancelado") : (st.filtro !== "todos" && p.status !== st.filtro)) return false;
-      return !q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0;
-    });
+    return st.pedidos.filter(function (p) { return p.status !== "cancelado" && (!q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0); });
   }
   function render() {
     var l = visiveis();
@@ -159,42 +137,20 @@
         return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + brl(i.preco) + " cada" +
           (i.nome ? "<br>Nome: <b>" + esc(i.nome) + "</b>" : "") + (i.serie ? " · Série: <b>" + esc(i.serie) + "</b>" : "") + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</span></div></div>";
       }).join("");
-      var op = STATUS.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === p.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span><span class="st ' + esc(p.status) + '">' + esc(stNome(p.status)) + '</span><b style="margin-left:auto">' + brl(p.total) + "</b></div>" +
-        '<div class="itens">' + itens + '</div><div class="acoes"><label>Situação<select data-st>' + op + '</select></label><label>Anotação interna<input data-nota maxlength="500" value="' + esc(p.nota || "") + '" placeholder="Ex: arte enviada, aguardando pagamento"></label>' +
-        '<button class="btn" type="button" data-sv>Salvar</button><button class="btn" type="button" data-png>Baixar via (imagem)</button><button class="btn p" type="button" data-print>Imprimir via</button></div></div>';
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + brl(p.total) + "</b></div>" +
+        '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
   document.addEventListener("click", function (e) {
-    var c = e.target.closest(".chip"); if (c) { st.filtro = c.getAttribute("data-f"); montarChips(); return render(); }
     var card = e.target.closest(".ped"); if (!card) return;
     var p = st.pedidos.filter(function (x) { return x.id === card.getAttribute("data-id"); })[0]; if (!p) return;
-    if (e.target.closest("[data-sv]")) {
-      var b = e.target.closest("[data-sv]"); b.disabled = true;
-      api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), { status: card.querySelector("[data-st]").value, nota: card.querySelector("[data-nota]").value.trim() || null, atualizado_em: new Date().toISOString() })
-        .then(function (r) { if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render(); }, function () { b.disabled = false; alert("Não consegui salvar. Tente de novo."); });
-    }
-    if (e.target.closest("[data-print]")) imprimir(p);
-    if (e.target.closest("[data-png]")) baixarPng(p);
+    if (e.target.closest("[data-png]")) { baixarPng(p); baixadas[p.id] = 1; try { localStorage.setItem("etiquetas:baixadas", JSON.stringify(baixadas)); } catch (er) {} render(); }
   });
   $("busca").addEventListener("input", function () { st.busca = this.value; render(); });
 
   // ---- via ----
-  function imprimir(p) {
-    var itens = (p.itens || []).map(function (i) {
-      var im = imgSeg(i.foto);
-      return '<div class="vi">' + (im ? '<img src="' + esc(im) + '" alt="">' : "") + '<div><b style="font-size:18px">' + esc(i.qtd) + "× " + esc(i.modeloNome) + "</b><br>" + esc(i.etiquetas) + " etiquetas · " + brl(i.preco) + " cada<br><b>Tema: " + esc(i.temaNome) + "</b><br>Nome: <b>" + esc(i.nome || "—") + "</b><br>Série/turma: <b>" + esc(i.serie || "—") + "</b>" + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</div></div>";
-    }).join("");
-    $("via").innerHTML = '<div class="vh"><div><h2>VIA DO PEDIDO</h2>Etiquetas escolares · vinil</div><div style="text-align:right"><b style="font-size:22px">' + esc(p.codigo) + "</b><br>Vip Gráfica</div></div>" +
-      '<div class="vc"><b style="font-size:20px">Cliente: ' + esc(p.cliente) + "</b><br>Telefone: " + esc(p.telefone || "—") + "<br>Data: " + dataBr(p.criado_em) + (p.nota ? "<br>Anotação: " + esc(p.nota) : "") + "</div>" + itens +
-      '<div class="vt"><span>TOTAL DO PEDIDO</span><span>' + brl(p.total) + '</span></div><div class="vu"><b>Uso da vendedora:</b><br>☐ Arte conferida &nbsp; ☐ Pagamento &nbsp; ☐ Impressão &nbsp; ☐ Entregue</div>';
-    var imgs = $("via").querySelectorAll("img"), falta = imgs.length;
-    if (!falta) return window.print();
-    var fim = function () { if (--falta <= 0) window.print(); };
-    Array.prototype.forEach.call(imgs, function (im) { if (im.complete) fim(); else { im.onload = fim; im.onerror = fim; } });
-  }
   function carregarImg(src) { return new Promise(function (res) { if (!src) return res(null); var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { res(null); }; im.src = src; }); }
   function quebra(ctx, txt, max) { var pal = String(txt).split(/\s+/), lin = [], at = ""; pal.forEach(function (w) { var t = at ? at + " " + w : w; if (ctx.measureText(t).width > max && at) { lin.push(at); at = w; } else at = t; }); if (at) lin.push(at); return lin; }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -205,13 +161,12 @@
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; ctx.font = "600 24px Inter, sans-serif";
       var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0)) * 38 + 24); });
-      var extra = p.nota ? 40 : 0, H = 330 + extra + alt.reduce(function (a, b) { return a + b + 20; }, 0) + 220; cv.height = H;
+      var extra = 0, H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + 150; cv.height = H;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
       ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
       ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + p.cliente, P, 168);
       ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—"), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
-      if (p.nota) ctx.fillText("Anotação: " + p.nota, P, 278);
       var y = 296 + extra; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
       itens.forEach(function (i, k) {
         var h = alt[k], sub = i.preco * i.qtd;
@@ -226,7 +181,6 @@
         y += h + 20;
       });
       ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(brl(p.total), W - P - 28, y + 56); ctx.textAlign = "left";
-      y += 130; ctx.fillStyle = "#3B4560"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Uso da vendedora:", P, y); ctx.font = "600 24px Inter, sans-serif"; ctx.fillText("☐ Arte conferida     ☐ Pagamento     ☐ Impressão     ☐ Entregue", P, y + 42);
       cv.toBlob(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "via-" + p.codigo + ".png"; document.body.appendChild(a); a.click(); a.remove(); }, "image/png");
     });
   }

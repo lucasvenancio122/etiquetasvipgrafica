@@ -6,7 +6,7 @@ Hospedado no GitHub Pages em https://etiquetasescolares.vipgraficalimeira.com.br
 Os temas e preços são cadastrados no admin do catálogo (botão "Etiquetas escolares"); este site só lê o que foi publicado lá.
 
 ## Pedidos (área da equipe)
-`pedidos.html` — lista dos pedidos feitos pelos clientes (tabela `pedidos_etiquetas` no Supabase). Login com os usuários do sistema; permite mudar a situação, anotar e imprimir/baixar a via. Separado do admin do catálogo.
+`pedidos.html` — lista simples dos pedidos feitos pelos clientes (tabela `pedidos_etiquetas`), só para a equipe ver o pedido e baixar a via (PNG). Login com os usuários do sistema. O acompanhamento do pedido é feito em outro sistema.
 
 ## Admin das etiquetas
 `admin.html` — o administrador edita preços das cartelas, dados da loja (nome, WhatsApp, rodapé) e os temas (enviar imagens, renomear, categoria, ocultar, excluir). Os dados ficam na chave `gc2:etiquetas_publico` (independente do catálogo); se ela não existir, o site usa os dados do catálogo.
