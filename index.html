@@ -321,10 +321,11 @@
   }
 
   // ---------- passo 2: tema ----------
-  function categoriasTema() { var s = {}, l = []; estado.etq.temas.forEach(function (t) { var c = (t.categoria || "").trim(); if (c && !s[c]) { s[c] = 1; l.push(c); } }); return l; }
+  function catsDe(t) { return String(t.categoria || "").split(/[,;\/]+/).map(function (c) { return c.trim(); }).filter(Boolean); }
+  function categoriasTema() { var s = {}, l = []; estado.etq.temas.forEach(function (t) { catsDe(t).forEach(function (c) { if (!s[c]) { s[c] = 1; l.push(c); } }); }); return l; }
   function temasFiltrados() {
     var q = estado.busca.trim().toLowerCase();
-    return estado.etq.temas.filter(function (t) { return (estado.cat === "Todos" || (t.categoria || "").trim() === estado.cat) && (!q || t.nome.toLowerCase().indexOf(q) >= 0); });
+    return estado.etq.temas.filter(function (t) { return (estado.cat === "Todos" || catsDe(t).indexOf(estado.cat) >= 0) && (!q || t.nome.toLowerCase().indexOf(q) >= 0); });
   }
   function viewTemas() {
     estado.passo = 2; var m = modeloPor(estado.modelo);
