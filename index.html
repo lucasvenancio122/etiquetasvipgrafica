@@ -196,6 +196,7 @@
 <script>
 (function () {
   "use strict";
+  var T0 = Date.now();
   var DEMO = /[?&]demo(=1|=true)?(&|$)/.test(location.search);
   var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
@@ -358,6 +359,7 @@
       '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp.</p>' +
       '<div class="dois"><label class="f">Seu nome *<input type="text" id="fCliente" maxlength="60" placeholder="Quem está fazendo o pedido" value="' + esc(estado.cliente) + '"></label>' +
       '<label class="f">Seu telefone (opcional)<input type="tel" id="fFone" maxlength="20" placeholder="(19) 99999-9999" value="' + esc(estado.fone) + '"></label></div>' +
+      '<div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>Não preencha este campo<input type="text" id="fSite" name="site" tabindex="-1" autocomplete="off"></label></div>' +
       '<p class="nota" style="margin-top:12px">Ao enviar, o pedido fica registrado com a nossa equipe e você finaliza pelo WhatsApp.</p>' +
       '<div class="acoes"><button class="btn wa" type="button" id="enviar">Enviar pedido</button></div></div></div>';
     renderPassos(); renderLista(); window.scrollTo({ top: 0 });
@@ -440,7 +442,8 @@
     var b = $("enviar"), txt = b.textContent; b.disabled = true; b.textContent = "Enviando o pedido…";
     lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone });
     var fim = function (ok) { b.disabled = false; b.textContent = txt; confirmacao(ok); };
-    if (DEMO) return fim(true);
+    var fSite = $("fSite");
+    if (DEMO || (fSite && fSite.value) || Date.now() - T0 < 8000) return fim(true);
     salvarPedido(0).then(function () { fim(true); }, function () { fim(false); });
   }
 
