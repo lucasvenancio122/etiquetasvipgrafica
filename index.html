@@ -294,7 +294,7 @@
     var wa = numeroWa();
     $("rodape").innerHTML = '<div class="rod-top">' + (logo ? '<img src="' + esc(logo) + '" alt="' + esc(nome) + '" />' : '<span class="nome-txt">' + esc(nome) + "</span>") +
       (wa ? '<a class="rod-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + wa + '">Entrar em contato</a>' : "") + "</div>" +
-      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
+      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b> <span style='opacity:.5'>v18/11 10:10</span></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
     document.title = "Etiquetas escolares | " + nome;
   }
   function renderPassos() {
