@@ -6,6 +6,17 @@
 <title>Etiquetas escolares | Vip Gráfica</title>
 <meta name="description" content="Etiquetas escolares em vinil resistente à água: escolha o modelo da cartela, o tema e finalize pelo WhatsApp." />
 <meta name="theme-color" content="#101C3F" />
+<link rel="canonical" href="https://etiquetasescolares.vipgraficalimeira.com.br/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Vip Gráfica" />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:title" content="Etiquetas escolares — Vip Gráfica" />
+<meta property="og:description" content="Vinil resistente à água, 3 modelos de cartela e mais de 30 temas. Escolha o modelo, o tema e finalize pelo WhatsApp." />
+<meta property="og:url" content="https://etiquetasescolares.vipgraficalimeira.com.br/" />
+<meta property="og:image" content="https://etiquetasescolares.vipgraficalimeira.com.br/og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" />
 <style>
@@ -30,12 +41,12 @@
   .top-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
   .logo-link { display: flex; align-items: center; min-width: 0; flex: 1; text-decoration: none; color: inherit; }
   .logo-link img { height: 54px; width: auto; max-width: 180px; object-fit: contain; }
-  .logo-link .nome-txt { font-family: var(--display); font-size: 20px; font-weight: 700; white-space: nowrap; }
+  .logo-link .nome-txt { font-family: var(--display); font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .btn-top { border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 14px; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
   .btn-top:hover { background: var(--ink); color: #fff; }
   .pedido-btn { display: flex; align-items: center; gap: 8px; background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; font-size: 14px; }
   .pedido-btn .count { background: var(--brand); border-radius: 999px; min-width: 22px; height: 22px; padding: 0 6px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
-  @media (max-width: 640px) { .btn-top { padding: 8px 10px; font-size: 12.5px; } .pedido-btn { padding: 8px 12px; font-size: 13px; } .logo-link img { height: 46px; max-width: 120px; } }
+  @media (max-width: 640px) { .top-row { gap: 8px; } .btn-top { padding: 8px 10px; font-size: 12.5px; } .pedido-btn { padding: 8px 12px; font-size: 13px; } .logo-link img { height: 46px; max-width: 120px; } .logo-link .nome-txt { font-size: 17px; } }
 
   .hero { margin-top: 22px; background: linear-gradient(120deg, #101C3F, #1D2F66); border-radius: var(--radius); color: #fff; padding: 26px 28px; position: relative; overflow: hidden; }
   .hero::after { content: ""; position: absolute; right: -50px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: var(--brand); opacity: .9; }
@@ -67,6 +78,7 @@
   .exemplo .lupa { position: absolute; right: 8px; bottom: 8px; background: rgba(16,28,63,.85); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 4px 11px; }
   .leg { font-size: 12px; color: var(--grey); margin: 0 0 12px; text-align: center; }
   #zoom { position: fixed; inset: 0; z-index: 80; background: rgba(10,18,40,.88); display: flex; align-items: center; justify-content: center; padding: 18px; cursor: zoom-out; }
+  .fecha-zoom { position: absolute; top: 14px; right: 16px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #101C3F; font-size: 26px; line-height: 1; font-weight: 700; cursor: pointer; }
   #zoom img { max-width: 100%; max-height: 100%; border-radius: 8px; background: #fff; }
   .diag { background: #F7F9FE; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; flex: 1; }
   .lin { display: flex; align-items: center; gap: 12px; }
@@ -294,7 +306,13 @@
     var wa = numeroWa();
     $("rodape").innerHTML = '<div class="rod-top">' + (logo ? '<img src="' + esc(logo) + '" alt="' + esc(nome) + '" />' : '<span class="nome-txt">' + esc(nome) + "</span>") +
       (wa ? '<a class="rod-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + wa + '">Entrar em contato</a>' : "") + "</div>" +
-      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b> <span style='opacity:.5'>v18/11 10:10</span></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
+      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b> <span style='opacity:.5'>v18/11 11:16</span></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
+    // se a logo nao carregar, mostra o nome da loja como texto puro
+    ["logoLink", "rodape"].forEach(function (cx) {
+      var im = $(cx) && $(cx).querySelector("img"); if (!im) return;
+      im.onerror = function () { var sp = document.createElement("span"); sp.className = "nome-txt"; sp.textContent = nome; if (im.parentNode) im.parentNode.replaceChild(sp, im); };
+      if (im.complete && im.naturalWidth === 0) im.onerror();
+    });
     document.title = "Etiquetas escolares | " + nome;
   }
   function renderPassos() {
@@ -466,7 +484,7 @@
   // ---------- eventos ----------
   document.addEventListener("click", function (e) {
     var t = e.target.closest("button"); if (!t) return; var v;
-    if ((v = t.getAttribute("data-zoom"))) { var z = document.createElement("div"); z.id = "zoom"; z.innerHTML = '<img src="' + esc(v) + '" alt="Exemplo da cartela" />'; z.addEventListener("click", function () { z.remove(); }); document.body.appendChild(z); return; }
+    if ((v = t.getAttribute("data-zoom"))) { var z = document.createElement("div"); z.id = "zoom"; z.innerHTML = '<img src="' + esc(v) + '" alt="Exemplo da cartela" /><button type="button" class="fecha-zoom" aria-label="Fechar">×</button>'; var fecha = function () { z.remove(); document.removeEventListener("keydown", esc2); }; var esc2 = function (ev) { if (ev.key === "Escape") fecha(); }; document.addEventListener("keydown", esc2); z.addEventListener("click", fecha); document.body.appendChild(z); return; }
     if ((v = t.getAttribute("data-modelo"))) { if (estado.modelo !== v) { estado.tema = null; } estado.modelo = v; return viewTemas(); }
     if ((v = t.getAttribute("data-cat"))) { estado.cat = v; var cs = document.querySelectorAll("#chips .chip"); for (var i = 0; i < cs.length; i++) cs[i].classList[cs[i].getAttribute("data-cat") === v ? "add" : "remove"]("on"); return renderTemas(); }
     if ((v = t.getAttribute("data-tema"))) { estado.tema = v; renderTemas(); return barraTema(); }

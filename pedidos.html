@@ -163,13 +163,13 @@
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; ctx.font = "600 24px Inter, sans-serif";
       var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0) + (i.descricao ? quebra(ctx, "Personalizado: " + i.descricao, 520).length : 0)) * 38 + 24); });
-      var extra = 0, H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + 150; cv.height = H;
+      var temPerso = itens.some(function (i) { return i.acombinar; }), H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + (temPerso ? 160 : 100); cv.height = H;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
       ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
       ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + p.cliente, P, 168);
       ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—"), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
-      var y = 296 + extra; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
+      var y = 296; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
       itens.forEach(function (i, k) {
         var h = alt[k], sub = i.preco * i.qtd, aCombinar = !!i.acombinar;
         ctx.fillStyle = "#fff"; rr(ctx, P, y, W - 2 * P, h, 18); ctx.fill(); ctx.strokeStyle = "#CBD3E6"; ctx.lineWidth = 2; ctx.stroke();
