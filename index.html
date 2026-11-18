@@ -106,6 +106,11 @@
   .tema img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
   .tema:hover img { transform: scale(1.05); }
   .tema .nm { padding: 9px 11px 11px; font-weight: 700; font-size: 13.5px; line-height: 1.25; }
+  .tema.perso { border: 2px dashed var(--brand); background: #FFF7F6; }
+  .tema.perso .im { display: flex; align-items: center; justify-content: center; font-size: 44px; background: #FDEDEB; }
+  .tema.perso .nm { color: var(--brand); }
+  .tema .ps { padding: 0 11px 11px; font-size: 12px; color: var(--grey, #6B7385); line-height: 1.3; margin-top: -6px; }
+  .im-perso { width: 110px; height: 110px; flex: none; border-radius: 12px; border: 2px dashed var(--brand); background: #FDEDEB; display: flex; align-items: center; justify-content: center; font-size: 40px; }
   .tema.sel { border-color: var(--brand); }
   .tema.sel::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
   .barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); padding: 10px 18px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgba(16,28,63,.1); transform: translateY(110%); transition: transform .25s; }
@@ -142,7 +147,7 @@
   #via .pv { width: 100%; border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; display: block; }
   #via .passos-via { font-size: 13.5px; color: var(--ink-2); margin: 0 0 12px; padding-left: 18px; }
   #via .acoes { margin-top: 8px; }
-  .total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 18px; margin: 14px 0 4px; }
+  .total { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 18px; margin: 14px 0 4px; }
   .nota { font-size: 12.5px; color: var(--grey); margin: 6px 0 14px; }
   .acoes { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
   .vazio-aviso { background: #FDECEA; border: 1px solid #F5C2BE; color: #8A1C15; border-radius: 12px; padding: 14px 16px; }
@@ -218,7 +223,7 @@
       { tam: "4×1 cm", qtd: 80, uso: "lápis, apontador, borracha", c: AZUL, w: 70, ar: "4/1" } ] }
   ];
 
-  var estado = { loja: {}, etq: { temas: [], precos: {} }, passo: 1, modelo: null, tema: null, cat: "Todos", busca: "", pedido: [], qtd: 1, nome: "", serie: "", cliente: "", fone: "", codigo: "", obs: "" };
+  var estado = { loja: {}, etq: { temas: [], precos: {} }, passo: 1, modelo: null, tema: null, cat: "Todos", busca: "", pedido: [], qtd: 1, nome: "", serie: "", cliente: "", fone: "", codigo: "", obs: "", perso: "" };
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function urlSegura(u) {
@@ -245,7 +250,10 @@
     var orig = urlSegura(t.foto), f = fotoDe(t, modeloId);
     return '<img src="' + esc(f) + '" alt="' + esc(alt) + '"' + (extra || "") + (f !== orig ? ' onerror="this.onerror=null;this.src=\'' + esc(orig) + '\'"' : "") + " />";
   }
-  function temaPor(id) { var l = estado.etq.temas; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  var PERSO = { id: "__perso", nome: "Tema personalizado", categoria: "", perso: true, foto: "" };
+  function temaPor(id) { if (id === PERSO.id) return PERSO; var l = estado.etq.temas; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function ehPerso(i) { return !!(i && i.tema === PERSO.id); }
+  function precoItem(i) { if (ehPerso(i)) return null; var m = modeloPor(i.modelo); return m ? precoDe(m) : null; }
 
   // ---------- demo ----------
   function arteTema(nome, a, b, emoji) {
@@ -332,9 +340,10 @@
   function renderTemas() {
     var box = $("temas"); if (!box) return;
     var l = temasFiltrados();
-    box.innerHTML = l.length ? l.map(function (t) {
+    var cartaoPerso = '<button class="tema perso' + (estado.tema === PERSO.id ? " sel" : "") + '" type="button" data-tema="' + PERSO.id + '"><div class="im">✏️</div><div class="nm">Tema personalizado</div><div class="ps">Não achou o tema? Descreva o que você quer.</div></button>';
+    box.innerHTML = cartaoPerso + (l.length ? l.map(function (t) {
       return '<button class="tema' + (estado.tema === t.id ? " sel" : "") + '" type="button" data-tema="' + esc(t.id) + '"><div class="im">' + imgTema(t, estado.modelo, t.nome, ' loading="lazy"') + '</div><div class="nm">' + esc(t.nome) + "</div></button>";
-    }).join("") : '<p class="sub" style="grid-column:1/-1">Nenhum tema encontrado.</p>';
+    }).join("") : (estado.busca.trim() ? '<p class="sub" style="grid-column:1/-1">Nenhum tema encontrado — mas você pode pedir um personalizado acima.</p>' : ""));
   }
   function barra(on) { $("barra").classList[on ? "add" : "remove"]("show"); }
   function barraTema() {
@@ -350,7 +359,8 @@
     var m = modeloPor(estado.modelo), t = temaPor(estado.tema);
     if (!m || !t) return viewTemas();
     $("app").innerHTML = '<button class="voltar" type="button" id="vTema">← Trocar tema</button><h2 class="tit">3. Finalizar</h2><p class="sub">Confira, adicione o nome se quiser e envie o pedido pelo WhatsApp.</p>' +
-      '<div class="final"><div class="caixa"><div class="prev">' + imgTema(t, m.id, t.nome) + '<div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + brl(precoDe(m)) + " cada cartela</p></div></div>" +
+      '<div class="final"><div class="caixa"><div class="prev">' + (t.perso ? '<div class="im-perso">✏️</div>' : imgTema(t, m.id, t.nome)) + '<div><h3>' + esc(m.nome) + "</h3><p>Tema: <b>" + esc(t.nome) + "</b></p><p>" + m.total + " etiquetas · " + (t.perso ? "<b>valor a combinar</b>" : brl(precoDe(m)) + " cada cartela") + "</p></div></div>" +
+      (t.perso ? '<label class="f">Descreva o tema que você quer *<textarea id="fPerso" rows="2" maxlength="300" placeholder="Ex: capivara com fundo verde e nome em roxo">' + esc(estado.perso) + '</textarea></label><p class="nota">A arte e o valor do tema personalizado são combinados no WhatsApp. Se tiver uma imagem de referência, você envia por lá.</p>' : "") +
       '<label class="f">Quantidade de cartelas<br><span class="qtd"><button type="button" id="menos" aria-label="Menos">−</button><span id="qv">' + estado.qtd + '</span><button type="button" id="mais" aria-label="Mais">+</button></span></label>' +
       '<div class="dois"><label class="f">Nome nas etiquetas *<input type="text" id="fNome" maxlength="60" placeholder="Ex: Maria Clara" value="' + esc(estado.nome) + '"></label>' +
       '<label class="f">Série / turma (opcional)<input type="text" id="fSerie" maxlength="40" placeholder="Ex: Maternal 1" value="' + esc(estado.serie) + '"></label></div>' +
@@ -364,30 +374,32 @@
       '<div class="acoes"><button class="btn wa" type="button" id="enviar">Enviar pedido</button></div></div></div>';
     renderPassos(); renderLista(); window.scrollTo({ top: 0 });
   }
-  function itemAtual() { return { modelo: estado.modelo, tema: estado.tema, qtd: estado.qtd, nome: estado.nome.trim(), serie: estado.serie.trim(), obs: estado.obs.trim() }; }
+  function itemAtual() { return { modelo: estado.modelo, tema: estado.tema, qtd: estado.qtd, nome: estado.nome.trim(), serie: estado.serie.trim(), obs: estado.obs.trim(), perso: estado.tema === PERSO.id ? estado.perso.trim() : "" }; }
   function listaCompleta() { return estado.pedido.concat([itemAtual()]); }
   function renderLista() {
     var l = listaCompleta();
     $("listaPed").innerHTML = l.map(function (i, k) {
       var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return "";
-      return '<div class="item-ped">' + imgTema(t, i.modelo, "") + '<div class="t"><b>' + i.qtd + "× " + esc(m.nome) + "</b><span>" + esc(t.nome) + (i.nome ? " · " + esc(i.nome) : "") + (i.serie ? " · " + esc(i.serie) : "") + "</span></div>" +
-        '<div style="font-weight:800;font-size:13.5px">' + brl(precoDe(m) * i.qtd) + "</div>" + (k < estado.pedido.length ? '<button class="x" type="button" data-rem="' + k + '" aria-label="Remover">×</button>' : "") + "</div>";
+      var pr = precoItem(i);
+      return '<div class="item-ped">' + (ehPerso(i) ? '<div class="im-perso" style="width:44px;height:44px;font-size:20px;border-radius:8px">✏️</div>' : imgTema(t, i.modelo, "")) + '<div class="t"><b>' + i.qtd + "× " + esc(m.nome) + "</b><span>" + esc(t.nome) + (ehPerso(i) && i.perso ? ": " + esc(i.perso) : "") + (i.nome ? " · " + esc(i.nome) : "") + (i.serie ? " · " + esc(i.serie) : "") + "</span></div>" +
+        '<div style="font-weight:800;font-size:13.5px">' + (pr == null ? "a combinar" : brl(pr * i.qtd)) + "</div>" + (k < estado.pedido.length ? '<button class="x" type="button" data-rem="' + k + '" aria-label="Remover">×</button>' : "") + "</div>";
     }).join("");
-    var s = 0; l.forEach(function (i) { var m = modeloPor(i.modelo); if (m) s += precoDe(m) * i.qtd; });
-    $("totalBox").innerHTML = "<span>Total</span><span>" + brl(s) + "</span>";
+    var s = 0, temPerso = false; l.forEach(function (i) { var pr = precoItem(i); if (pr == null) temPerso = true; else s += pr * i.qtd; });
+    var soPerso = temPerso && s === 0;
+    $("totalBox").innerHTML = "<span>Total</span><span>" + (soPerso ? "a combinar" : brl(s)) + "</span>" + (temPerso && !soPerso ? '<div class="nota" style="flex-basis:100%;text-align:right;font-weight:600;margin-top:4px">+ tema personalizado (valor a combinar)</div>' : "");
   }
   function mensagem() {
-    var l = listaCompleta(), nome = estado.loja.nome || "Vip Gráfica", s = 0;
+    var l = listaCompleta(), nome = estado.loja.nome || "Vip Gráfica", s = 0, perso = false;
     var linhas = ["Olá! Vim pelo catálogo da " + nome + " e quero fazer um pedido de *etiquetas escolares* (vinil resistente à água):", ""];
     l.forEach(function (i, k) {
-      var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return; s += precoDe(m) * i.qtd;
-      linhas.push((k + 1) + ") " + i.qtd + "× " + m.nome + " (" + m.total + " etiquetas) — " + brl(precoDe(m)) + " cada");
-      linhas.push("   Tema: " + t.nome);
+      var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return; var pr = precoItem(i); if (pr == null) perso = true; else s += pr * i.qtd;
+      linhas.push((k + 1) + ") " + i.qtd + "× " + m.nome + " (" + m.total + " etiquetas) — " + (pr == null ? "valor a combinar" : brl(pr) + " cada"));
+      linhas.push("   Tema: " + t.nome + (ehPerso(i) && i.perso ? " — " + i.perso : ""));
       if (i.nome) linhas.push("   Nome: " + i.nome);
       if (i.serie) linhas.push("   Série: " + i.serie);
       if (i.obs) linhas.push("   Obs: " + i.obs);
     });
-    linhas.push("", "*Total: " + brl(s) + "*", "", "Pedido *" + codigoPedido() + "* — pode confirmar para mim, por favor? 🙂");
+    linhas.push("", (perso && s === 0 ? "*Total: a combinar*" : "*Total: " + brl(s) + "*" + (perso ? " + tema personalizado (a combinar)" : "")), "", "Pedido *" + codigoPedido() + "* — pode confirmar para mim, por favor? 🙂");
     return linhas.join("\n");
   }
   function codigoPedido() {
@@ -402,8 +414,8 @@
     var itens = [], total = 0;
     listaCompleta().forEach(function (i) {
       var m = modeloPor(i.modelo), t = temaPor(i.tema); if (!m || !t) return;
-      var pr = precoDe(m); total += pr * i.qtd;
-      itens.push({ modelo: m.id, modeloNome: m.nome, etiquetas: m.total, tamanhos: m.tamanhos, preco: pr, qtd: i.qtd, tema: t.id, temaNome: t.nome, foto: fotoDe(t, m.id) || "", nome: i.nome, serie: i.serie, obs: i.obs });
+      var pr = precoItem(i); if (pr != null) total += pr * i.qtd;
+      itens.push({ modelo: m.id, modeloNome: m.nome, etiquetas: m.total, tamanhos: m.tamanhos, preco: pr == null ? 0 : pr, acombinar: pr == null, qtd: i.qtd, tema: t.id, temaNome: t.nome, descricao: ehPerso(i) ? i.perso : "", foto: ehPerso(i) ? "" : (fotoDe(t, m.id) || ""), nome: i.nome, serie: i.serie, obs: i.obs });
     });
     return { itens: itens, total: Math.round(total * 100) / 100 };
   }
@@ -436,8 +448,11 @@
     $("viaFechar").onclick = function () { el.remove(); estado.pedido = []; lsSet(LS, []); estado.codigo = ""; estado.nome = ""; estado.serie = ""; estado.obs = ""; estado.qtd = 1; estado.tema = null; viewModelos(); };
   }
   function pedeNome() { toast("Informe o nome que vai nas etiquetas."); var n = $("fNome"); if (n) { n.focus(); n.scrollIntoView({ block: "center", behavior: "smooth" }); n.style.borderColor = "#E5332B"; } }
+  function pedeDesc() { toast("Descreva o tema personalizado que você quer."); var p = $("fPerso"); if (p) { p.focus(); p.scrollIntoView({ block: "center", behavior: "smooth" }); p.style.borderColor = "#E5332B"; } }
+  function faltaDescricao() { return estado.tema === PERSO.id && !estado.perso.trim(); }
   function enviar() {
     if (!estado.nome.trim()) return pedeNome();
+    if (faltaDescricao()) return pedeDesc();
     if (!estado.cliente.trim()) { toast("Informe o seu nome para enviar o pedido."); var c = $("fCliente"); if (c) c.focus(); return; }
     var b = $("enviar"), txt = b.textContent; b.disabled = true; b.textContent = "Enviando o pedido…";
     lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone });
@@ -460,10 +475,10 @@
     if (t.id === "vTema") return viewTemas();
     if (t.id === "mais") { estado.qtd = Math.min(50, estado.qtd + 1); $("qv").textContent = estado.qtd; return renderLista(); }
     if (t.id === "menos") { estado.qtd = Math.max(1, estado.qtd - 1); $("qv").textContent = estado.qtd; return renderLista(); }
-    if (t.id === "addOutro") { if (!estado.nome.trim()) return pedeNome(); estado.pedido.push(itemAtual()); lsSet(LS, estado.pedido); estado.tema = null; estado.modelo = null; estado.qtd = 1; estado.obs = ""; toast("Adicionado ao seu pedido."); return viewModelos(); }
+    if (t.id === "addOutro") { if (!estado.nome.trim()) return pedeNome(); if (faltaDescricao()) return pedeDesc(); estado.pedido.push(itemAtual()); lsSet(LS, estado.pedido); estado.tema = null; estado.modelo = null; estado.qtd = 1; estado.obs = ""; estado.perso = ""; toast("Adicionado ao seu pedido."); return viewModelos(); }
     if (t.id === "enviar") return enviar();
     if (t.id === "abrirPedido") {
-      if (!(estado.modelo && estado.tema) && estado.pedido.length) { var u = estado.pedido.pop(); estado.modelo = u.modelo; estado.tema = u.tema; estado.qtd = u.qtd; estado.nome = u.nome; estado.serie = u.serie || ""; estado.obs = u.obs; lsSet(LS, estado.pedido); }
+      if (!(estado.modelo && estado.tema) && estado.pedido.length) { var u = estado.pedido.pop(); estado.modelo = u.modelo; estado.tema = u.tema; estado.qtd = u.qtd; estado.nome = u.nome; estado.serie = u.serie || ""; estado.obs = u.obs; estado.perso = u.perso || ""; lsSet(LS, estado.pedido); }
       return viewFinal();
     }
   });
@@ -473,6 +488,7 @@
     if (e.target.id === "fSerie") { estado.serie = e.target.value; return renderLista(); }
     if (e.target.id === "fCliente") { estado.cliente = e.target.value; return; }
     if (e.target.id === "fFone") { estado.fone = e.target.value; return; }
+    if (e.target.id === "fPerso") { estado.perso = e.target.value; e.target.style.borderColor = ""; return renderLista(); }
     if (e.target.id === "fObs") { estado.obs = e.target.value; }
   });
 

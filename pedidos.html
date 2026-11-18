@@ -77,6 +77,7 @@
   var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null };
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function totalTxt(p) { var itens = p.itens || []; return (Number(p.total) === 0 && itens.length && itens.every(function (i) { return i.acombinar; })) ? "a combinar" : brl(p.total); }
   function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
   function p2(n) { return (n < 10 ? "0" : "") + n; }
   function dataBr(iso) { var d = new Date(iso); return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
@@ -134,12 +135,13 @@
     $("lista").innerHTML = l.map(function (p) {
       var itens = (p.itens || []).map(function (i) {
         var im = imgSeg(i.foto);
-        return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + brl(i.preco) + " cada" +
+        return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + (i.acombinar ? "<b>valor a combinar</b>" : brl(i.preco) + " cada") +
+          (i.descricao ? "<br><b>Tema personalizado:</b> " + esc(i.descricao) : "") +
           (i.nome ? "<br>Nome: <b>" + esc(i.nome) + "</b>" : "") + (i.serie ? " · Série: <b>" + esc(i.serie) + "</b>" : "") + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</span></div></div>";
       }).join("");
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + brl(p.total) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
@@ -160,7 +162,7 @@
     Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(imgSeg(i.foto)); }))).then(function (r) {
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; ctx.font = "600 24px Inter, sans-serif";
-      var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0)) * 38 + 24); });
+      var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0) + (i.descricao ? quebra(ctx, "Personalizado: " + i.descricao, 520).length : 0)) * 38 + 24); });
       var extra = 0, H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + 150; cv.height = H;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
@@ -169,18 +171,20 @@
       ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—"), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
       var y = 296 + extra; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
       itens.forEach(function (i, k) {
-        var h = alt[k], sub = i.preco * i.qtd;
+        var h = alt[k], sub = i.preco * i.qtd, aCombinar = !!i.acombinar;
         ctx.fillStyle = "#fff"; rr(ctx, P, y, W - 2 * P, h, 18); ctx.fill(); ctx.strokeStyle = "#CBD3E6"; ctx.lineWidth = 2; ctx.stroke();
         if (imgs[k]) { ctx.save(); rr(ctx, P + 16, y + 16, 200, 200, 12); ctx.clip(); ctx.drawImage(imgs[k], P + 16, y + 16, 200, 200); ctx.restore(); }
         var x = P + 244, yy = y + 52; ctx.fillStyle = "#D6231A"; ctx.font = "800 32px Inter, sans-serif"; ctx.fillText(i.qtd + "× " + i.modeloNome, x, yy);
         ctx.fillStyle = "#3B4560"; ctx.font = "600 24px Inter, sans-serif"; ctx.fillText(i.etiquetas + " etiquetas · " + i.tamanhos + (i.tamanhos === 1 ? " tamanho" : " tamanhos"), x, yy + 34);
         ctx.fillStyle = "#101C3F"; ctx.font = "800 28px Inter, sans-serif"; yy += 76; ctx.fillText("Tema: " + i.temaNome, x, yy);
+        if (i.descricao) { ctx.font = "700 24px Inter, sans-serif"; ctx.fillStyle = "#D6231A"; quebra(ctx, "Personalizado: " + i.descricao, 520).forEach(function (l) { yy += 34; ctx.fillText(l, x, yy); }); ctx.fillStyle = "#101C3F"; }
         ctx.font = "700 26px Inter, sans-serif"; yy += 38; ctx.fillText("Nome: " + (i.nome || "—"), x, yy); yy += 38; ctx.fillText("Série/turma: " + (i.serie || "—"), x, yy);
         if (i.obs) { ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; quebra(ctx, "Obs: " + i.obs, 520).forEach(function (l) { yy += 36; ctx.fillText(l, x, yy); }); }
-        ctx.textAlign = "right"; ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText(brl(sub), W - P - 20, y + 52); ctx.font = "600 20px Inter, sans-serif"; ctx.fillStyle = "#6B7385"; ctx.fillText(brl(i.preco) + " cada", W - P - 20, y + 82); ctx.textAlign = "left";
+        ctx.textAlign = "right"; ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText(aCombinar ? "a combinar" : brl(sub), W - P - 20, y + 52); ctx.font = "600 20px Inter, sans-serif"; ctx.fillStyle = "#6B7385"; ctx.fillText(aCombinar ? "valor a combinar" : brl(i.preco) + " cada", W - P - 20, y + 82); ctx.textAlign = "left";
         y += h + 20;
       });
-      ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(brl(p.total), W - P - 28, y + 56); ctx.textAlign = "left";
+      ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(totalTxt(p), W - P - 28, y + 56); ctx.textAlign = "left";
+      if (itens.some(function (i) { return i.acombinar; })) { y += 100; ctx.fillStyle = "#D6231A"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("+ tema personalizado: valor a combinar com a cliente", P, y); y -= 100; }
       cv.toBlob(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "via-" + p.codigo + ".png"; document.body.appendChild(a); a.click(); a.remove(); }, "image/png");
     });
   }
