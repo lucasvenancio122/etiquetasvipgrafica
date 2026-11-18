@@ -306,7 +306,7 @@
     var wa = numeroWa();
     $("rodape").innerHTML = '<div class="rod-top">' + (logo ? '<img src="' + esc(logo) + '" alt="' + esc(nome) + '" />' : '<span class="nome-txt">' + esc(nome) + "</span>") +
       (wa ? '<a class="rod-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + wa + '">Entrar em contato</a>' : "") + "</div>" +
-      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b> <span style='opacity:.5'>v18/11 11:16</span></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
+      '<div class="rod-baixo"><p><b>Copyright © ' + new Date().getFullYear() + " " + esc(nome) + ". Todos os direitos reservados.</b> <span style='opacity:.5'>v18/11 11:43</span></p>" + (l.rodape ? "<p>" + esc(l.rodape) + "</p>" : "") + "</div>";
     // se a logo nao carregar, mostra o nome da loja como texto puro
     ["logoLink", "rodape"].forEach(function (cx) {
       var im = $(cx) && $(cx).querySelector("img"); if (!im) return;
@@ -387,7 +387,7 @@
       '<div class="acoes"><button class="btn sec" type="button" id="addOutro">+ Adicionar à lista e escolher outra cartela</button></div></div>' +
       '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp.</p>' +
       '<div class="dois"><label class="f">Seu nome *<input type="text" id="fCliente" maxlength="60" placeholder="Quem está fazendo o pedido" value="' + esc(estado.cliente) + '"></label>' +
-      '<label class="f">Seu telefone (opcional)<input type="tel" id="fFone" maxlength="20" placeholder="(19) 99999-9999" value="' + esc(estado.fone) + '"></label></div>' +
+      '<label class="f">Seu WhatsApp *<input type="tel" id="fFone" maxlength="20" placeholder="(19) 99999-9999" value="' + esc(estado.fone) + '"></label></div>' +
       '<div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>Não preencha este campo<input type="text" id="fSite" name="site" tabindex="-1" autocomplete="off"></label></div>' +
       '<p class="nota" style="margin-top:12px">Ao enviar, o pedido fica registrado com a nossa equipe e você finaliza pelo WhatsApp.</p>' +
       '<div class="acoes"><button class="btn wa" type="button" id="enviar">Enviar pedido</button></div></div></div>';
@@ -443,7 +443,7 @@
     return fetch(SUPABASE_URL + "/rest/v1/pedidos_etiquetas", {
       method: "POST",
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ codigo: codigoPedido(), cliente: estado.cliente.trim(), telefone: estado.fone.trim() || null, itens: p.itens, total: p.total })
+      body: JSON.stringify({ codigo: codigoPedido(), cliente: estado.cliente.trim(), telefone: estado.fone.trim(), itens: p.itens, total: p.total })
     }).then(function (r) {
       if (r.ok) return true;
       if (r.status === 409 && (tentativa || 0) < 3) { estado.codigo = ""; return salvarPedido((tentativa || 0) + 1); }
@@ -467,12 +467,15 @@
     $("viaFechar").onclick = function () { el.remove(); estado.pedido = []; lsSet(LS, []); estado.codigo = ""; estado.nome = ""; estado.serie = ""; estado.obs = ""; estado.qtd = 1; estado.tema = null; viewModelos(); };
   }
   function pedeNome() { toast("Informe o nome que vai nas etiquetas."); var n = $("fNome"); if (n) { n.focus(); n.scrollIntoView({ block: "center", behavior: "smooth" }); n.style.borderColor = "#E5332B"; } }
+  function foneOk() { var d = estado.fone.replace(/\D/g, ""); return d.length === 10 || d.length === 11; }
+  function pedeFone() { toast(estado.fone.trim() ? "Confira o telefone: precisa ter DDD e o número completo." : "Informe o seu WhatsApp para a gente confirmar o pedido."); var c = $("fFone"); if (c) { c.focus(); c.scrollIntoView({ block: "center", behavior: "smooth" }); c.style.borderColor = "#E5332B"; } }
   function pedeDesc() { toast("Descreva o tema personalizado que você quer."); var p = $("fPerso"); if (p) { p.focus(); p.scrollIntoView({ block: "center", behavior: "smooth" }); p.style.borderColor = "#E5332B"; } }
   function faltaDescricao() { return estado.tema === PERSO.id && !estado.perso.trim(); }
   function enviar() {
     if (!estado.nome.trim()) return pedeNome();
     if (faltaDescricao()) return pedeDesc();
     if (!estado.cliente.trim()) { toast("Informe o seu nome para enviar o pedido."); var c = $("fCliente"); if (c) c.focus(); return; }
+    if (!foneOk()) return pedeFone();
     var b = $("enviar"), txt = b.textContent; b.disabled = true; b.textContent = "Enviando o pedido…";
     lsSet(LS + ":cliente", { n: estado.cliente, f: estado.fone });
     var fim = function (ok) { b.disabled = false; b.textContent = txt; confirmacao(ok); };
@@ -506,7 +509,7 @@
     if (e.target.id === "fNome") { estado.nome = e.target.value; e.target.style.borderColor = ""; return renderLista(); }
     if (e.target.id === "fSerie") { estado.serie = e.target.value; return renderLista(); }
     if (e.target.id === "fCliente") { estado.cliente = e.target.value; return; }
-    if (e.target.id === "fFone") { estado.fone = e.target.value; return; }
+    if (e.target.id === "fFone") { estado.fone = e.target.value; e.target.style.borderColor = ""; return; }
     if (e.target.id === "fPerso") { estado.perso = e.target.value; e.target.style.borderColor = ""; return renderLista(); }
     if (e.target.id === "fObs") { estado.obs = e.target.value; }
   });

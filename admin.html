@@ -63,6 +63,10 @@
       </div>
     </div>
     <div class="card"><h2>Preço de cada cartela</h2><div class="grid" id="precos"></div></div>
+    <div class="card"><h2>Lista de clientes</h2>
+      <p class="mut">Nome e WhatsApp de quem já fez pedido pelo site, com quantos pedidos fez e quanto gastou. O arquivo abre no Excel e serve para importar no Kommo.</p>
+      <div class="barra"><button class="btn p sm" type="button" id="baixarClientes">Baixar lista de clientes</button><span class="mut" id="stClientes"></span></div>
+    </div>
     <div class="card"><h2>Temas <span class="mut" id="nTemas"></span></h2>
       <p class="mut">Envie várias imagens de uma vez: cada imagem vira um tema, com o nome do arquivo. Depois ajuste os nomes. A categoria (ex.: Meninas, Meninos) ajuda o cliente a filtrar. Para o tema aparecer nas duas listas, escreva as duas separadas por vírgula: <b>Meninas, Meninos</b>. Suba a arte com os 4 tamanhos empilhados (redonda, lápis, grande e 6×4, de cima para baixo): o sistema monta sozinho a versão da A3-2 e da A4.</p>
       <div class="barra">
@@ -219,6 +223,39 @@
         function (e) { sp.textContent = ""; renderTemas(); marcar(true); msg(e.message + " Os que já subiram estão na lista; clique em “Salvar e publicar”.", "erro"); });
   }
 
+  // ---- lista de clientes ----
+  function soDigitos(t) { return String(t || "").replace(/\D/g, ""); }
+  function dataBr(iso) { var d = new Date(iso), p = function (n) { return (n < 10 ? "0" : "") + n; }; return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear(); }
+  function csvCampo(t) { return '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"'; }
+  function baixarClientes() {
+    var b = $("baixarClientes"), sp = $("stClientes"); b.disabled = true; sp.textContent = "Buscando…";
+    token().then(function (t) {
+      return fetch(SUPABASE_URL + "/rest/v1/pedidos_etiquetas?select=cliente,telefone,criado_em,total,status&order=criado_em.asc&limit=5000", { headers: hdr(t), signal: timeout(30000) });
+    }).then(function (r) { if (!r.ok) throw new Error("Não consegui buscar os pedidos (" + r.status + ")."); return r.json(); })
+      .then(function (l) {
+        var porFone = {}, ordem = [];
+        l.forEach(function (p) {
+          if (p.status === "cancelado") return;
+          var f = soDigitos(p.telefone); if (f.length === 11 && f.charAt(0) !== "5") f = "55" + f; else if (f.length === 10) f = "55" + f;
+          var ch = f || ("nome:" + String(p.cliente || "").trim().toLowerCase());
+          if (!porFone[ch]) { porFone[ch] = { nome: p.cliente, fone: f, n: 0, total: 0, primeiro: p.criado_em, ultimo: p.criado_em }; ordem.push(ch); }
+          var c = porFone[ch]; c.n++; c.total += Number(p.total) || 0; c.ultimo = p.criado_em; if (p.cliente && String(p.cliente).length > String(c.nome || "").length) c.nome = p.cliente;
+        });
+        if (!ordem.length) { sp.textContent = "Nenhum pedido ainda."; b.disabled = false; return; }
+        var linhas = [["Nome", "WhatsApp", "Pedidos", "Total gasto (R$)", "Primeiro pedido", "Último pedido"].join(";")];
+        ordem.forEach(function (ch) {
+          var c = porFone[ch];
+          linhas.push([csvCampo(c.nome), csvCampo(c.fone), c.n, String(c.total.toFixed(2)).replace(".", ","), dataBr(c.primeiro), dataBr(c.ultimo)].join(";"));
+        });
+        var txt = "\ufeff" + linhas.join("\r\n");
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv;charset=utf-8" }));
+        a.download = "clientes-etiquetas-" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(a); a.click(); a.remove();
+        sp.textContent = ordem.length + " cliente(s) na lista."; b.disabled = false;
+      }, function (e) { sp.textContent = e.message; b.disabled = false; });
+  }
+
   // ---- eventos ----
   document.addEventListener("click", function (e) {
     var t = e.target.closest("button"); if (!t) return; var v;
@@ -233,7 +270,7 @@
   });
   $("ordenar").onclick = function () { st.dados.temas.sort(function (a, b) { return String(a.categoria || "").localeCompare(String(b.categoria || ""), "pt-BR") || String(a.nome).localeCompare(String(b.nome), "pt-BR"); }); marcar(true); renderTemas(); };
   $("arqs").addEventListener("change", function () { var l = Array.prototype.slice.call(this.files); this.value = ""; if (l.length) enviarTemas(l); });
-  $("salvar").onclick = salvar; $("sair").onclick = sair;
+  $("salvar").onclick = salvar; $("sair").onclick = sair; $("baixarClientes").onclick = baixarClientes;
   window.addEventListener("beforeunload", function (e) { if (st.sujo) { e.preventDefault(); e.returnValue = ""; } });
   function entrar() { $("telaLogin").classList.add("oculta"); $("telaApp").classList.remove("oculta"); $("quem").textContent = st.usuario; carregar().catch(function (e) { msg(e.message, "erro"); }); }
   $("fLogin").addEventListener("submit", function (e) {
