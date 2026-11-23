@@ -78,6 +78,7 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function totalTxt(p) { var itens = p.itens || []; return (Number(p.total) === 0 && itens.length && itens.every(function (i) { return i.acombinar; })) ? "a combinar" : brl(p.total); }
+  function cpfBr(c) { var d = String(c || "").replace(/\D/g, ""); return d.length === 11 ? d.slice(0,3) + "." + d.slice(3,6) + "." + d.slice(6,9) + "-" + d.slice(9) : (c || ""); }
   function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
   function p2(n) { return (n < 10 ? "0" : "") + n; }
   function dataBr(iso) { var d = new Date(iso); return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
@@ -127,7 +128,8 @@
   var baixadas = {}; try { baixadas = JSON.parse(localStorage.getItem("etiquetas:baixadas") || "{}"); } catch (e) {}
   function visiveis() {
     var q = st.busca.trim().toLowerCase();
-    return st.pedidos.filter(function (p) { return p.status !== "cancelado" && (!q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0); });
+    var qn = q.replace(/[.\-\s]/g, "");
+    return st.pedidos.filter(function (p) { return p.status !== "cancelado" && (!q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0 || (qn && String(p.cpf || "").indexOf(qn) >= 0)); });
   }
   function render() {
     var l = visiveis();
@@ -141,7 +143,7 @@
       }).join("");
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
@@ -168,7 +170,7 @@
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
       ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
       ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + p.cliente, P, 168);
-      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—"), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
+      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—") + (p.cpf ? "   ·   CPF: " + cpfBr(p.cpf) : ""), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
       var y = 296; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
       itens.forEach(function (i, k) {
         var h = alt[k], sub = i.preco * i.qtd, aCombinar = !!i.acombinar;
