@@ -20,6 +20,8 @@
   .btn.p { background:var(--ink); color:#fff; }
   .btn.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
   .wrap { max-width:960px; margin:0 auto; padding:16px 18px 60px; }
+  body.quadro-on .wrap { max-width:1360px; }
+  body.quadro-on .barra input { max-width:460px; }
   .login { max-width:360px; margin:60px auto; background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:0 8px 24px rgba(16,28,63,.08); }
   .login h2 { font-family:var(--display); margin:0 0 4px; }
   label.f { display:block; font-weight:600; font-size:13px; margin-top:12px; }
@@ -44,6 +46,34 @@
   .acoes { display:flex; flex-wrap:wrap; gap:8px; align-items:end; margin-top:10px; }
   .acoes label { flex:1; min-width:150px; margin:0; font-size:12px; }
   .vazio { text-align:center; color:var(--grey); padding:40px 0; }
+  .modos { display:flex; gap:6px; }
+  .modo { border:1px solid #CBD3E6; background:#fff; border-radius:8px; padding:7px 13px; font-size:13.5px; font-weight:600; }
+  .modo.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .quadro { display:grid; grid-template-columns:repeat(5,minmax(210px,1fr)); gap:10px; align-items:start; overflow-x:auto; padding-bottom:10px; }
+  .coluna { background:#EBF0FA; border-radius:12px; padding:9px; min-height:120px; }
+  .coluna.alvo { outline:2px dashed var(--brand); outline-offset:-3px; background:#FDEDEB; }
+  .col-cab { display:flex; align-items:center; gap:7px; font-weight:800; font-size:13.5px; margin:2px 4px 9px; }
+  .col-bola { width:10px; height:10px; border-radius:50%; flex:none; }
+  .col-n { margin-left:auto; background:#fff; border-radius:999px; padding:1px 8px; font-size:12px; color:var(--grey); }
+  .cartao { background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 10px; margin-bottom:8px; cursor:grab; box-shadow:0 1px 2px rgba(16,28,63,.06); }
+  .cartao:active { cursor:grabbing; }
+  .cartao.arrastando { opacity:.4; }
+  .cartao.volta { border-color:#E5332B; border-width:2px; background:#FFF6F5; }
+  .cartao .c1 { display:flex; gap:6px; align-items:baseline; }
+  .cartao .cd { font-weight:800; font-size:12.5px; }
+  .cartao .vl { margin-left:auto; font-weight:800; font-size:12.5px; }
+  .cartao .cn { font-weight:700; font-size:13.5px; margin:2px 0 1px; }
+  .cartao .ci { font-size:12px; color:var(--ink-2); line-height:1.35; }
+  .cartao .av { display:inline-block; margin-top:5px; font-size:11px; font-weight:800; color:#B3261E; background:#FDEDEB; border-radius:5px; padding:2px 6px; }
+  .cartao .pes { display:flex; gap:5px; margin-top:7px; flex-wrap:wrap; }
+  .pes .mv { border:1px solid #CBD3E6; background:#fff; border-radius:6px; padding:3px 8px; font-size:11.5px; font-weight:700; }
+  .pes .mv:hover { background:var(--ink); color:#fff; }
+  @media (max-width:860px) {
+    .quadro { grid-template-columns:repeat(5,82vw); gap:12px; scroll-snap-type:x mandatory; margin:0 -18px; padding:0 18px 12px; }
+    .coluna { scroll-snap-align:center; }
+    .barra .modos { width:100%; }
+    .modo { flex:1; }
+  }
   .ver { font-weight:700; color:var(--brand); }
 </style>
 </head>
@@ -62,7 +92,7 @@
 <div id="telaApp" class="oculta">
   <header><h1>Pedidos de etiquetas</h1><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
   <div class="wrap">
-    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"></div>
+    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><div class="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
     <div id="lista"></div>
   </div>
 </div>
@@ -73,8 +103,12 @@
   var SUPABASE_URL = "https://ogqiuggdofxhyffamymg.supabase.co";
   var KEY = "sb_publishable_uwzbFJqhfJ9dWhqJHzDryg_IhGwzj57";
   var SESSAO_KEY = "etiquetas:pedidos:sessao";
-  var STATUS = [["novo","Novo"],["arte","Arte conferida"],["pago","Pago"],["impresso","Impresso"],["entregue","Entregue"],["cancelado","Cancelado"]];
-  var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null };
+  var ETAPAS = [["novo","Novo","#E5332B"],["arte","Arte","#8A4FD3"],["producao","Produção","#C77700"],["expedicao","Expedição","#0E7BBF"],["entregue","Entregue","#1FA855"]];
+  function etapaNome(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return ETAPAS[i][1]; return s; }
+  function etapaCor(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return ETAPAS[i][2]; return "#6B7385"; }
+  function etapaIdx(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return i; return 0; }
+  var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null, modo: "quadro" };
+  try { st.modo = localStorage.getItem("etiquetas:modo") || "quadro"; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function totalTxt(p) { var itens = p.itens || []; return (Number(p.total) === 0 && itens.length && itens.every(function (i) { return i.acombinar; })) ? "a combinar" : brl(p.total); }
@@ -82,7 +116,7 @@
   function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
   function p2(n) { return (n < 10 ? "0" : "") + n; }
   function dataBr(iso) { var d = new Date(iso); return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
-  function stNome(s) { for (var i = 0; i < STATUS.length; i++) if (STATUS[i][0] === s) return STATUS[i][1]; return s; }
+  
   function imgSeg(u) { u = String(u || ""); return /^(https:\/\/|temas\/[A-Za-z0-9\/_.-]+\.(jpg|png)$)/.test(u) ? u : ""; }
 
   // ---- sessão (mesmos usuários do sistema, sessão própria desta página) ----
@@ -131,8 +165,48 @@
     var qn = q.replace(/[.\-\s]/g, "");
     return st.pedidos.filter(function (p) { return p.status !== "cancelado" && (!q || (p.codigo + " " + p.cliente + " " + (p.telefone || "")).toLowerCase().indexOf(q) >= 0 || (qn && String(p.cpf || "").indexOf(qn) >= 0)); });
   }
+  function mover(p, novo) {
+    if (novo === p.status) return;
+    var corpo = { status: novo, atualizado_em: new Date().toISOString(), movido_por: st.usuario.slice(0, 40) };
+    if (p.status === "expedicao" && novo === "producao") {
+      var motivo = (prompt("Por que o pedido " + p.codigo + " está voltando para a produção?") || "").trim();
+      if (motivo.length < 3) { if (motivo !== "") alert("Escreva o motivo com um pouco mais de detalhe."); return; }
+      corpo.devolvido = true; corpo.motivo_devolucao = motivo.slice(0, 300);
+    }
+    var antes = { s: p.status, d: p.devolvido, m: p.motivo_devolucao };
+    Object.assign(p, corpo); render();
+    api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), corpo).then(function (r) {
+      if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render();
+    }, function () { p.status = antes.s; p.devolvido = antes.d; p.motivo_devolucao = antes.m; render(); alert("Não consegui mover o pedido. Tente de novo."); });
+  }
+  function cartao(p) {
+    var it = (p.itens || []), n = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0); }, 0);
+    var resumo = it.slice(0, 2).map(function (i) { return i.qtd + "× " + i.modeloNome + " · " + i.temaNome; }).join("<br>") + (it.length > 2 ? "<br>+ " + (it.length - 2) + " item(ns)" : "");
+    var ix = etapaIdx(p.status);
+    var pes = "";
+    if (ix > 0) pes += '<button class="mv" type="button" data-mv="' + esc(ETAPAS[ix - 1][0]) + '">‹ ' + esc(ETAPAS[ix - 1][1]) + "</button>";
+    if (ix < ETAPAS.length - 1) pes += '<button class="mv" type="button" data-mv="' + esc(ETAPAS[ix + 1][0]) + '">' + esc(ETAPAS[ix + 1][1]) + " ›</button>";
+    pes += '<button class="mv" type="button" data-png>Via</button>';
+    return '<div class="cartao' + (p.devolvido ? " volta" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
+      '<div class="c1"><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
+      '<div class="cn">' + esc(p.cliente) + "</div>" +
+      '<div class="ci">' + resumo + " · " + n + " cartela(s)" + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
+      (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
+      '<div class="pes">' + pes + "</div></div>";
+  }
+  function renderQuadro(l) {
+    var dica = window.matchMedia && window.matchMedia("(max-width:860px)").matches ? '<p class="mut" style="font-size:12px;margin:0 0 8px">Arraste para o lado para ver as outras etapas.</p>' : "";
+    $("lista").innerHTML = dica + '<div class="quadro">' + ETAPAS.map(function (et) {
+      var dela = l.filter(function (p) { return p.status === et[0]; });
+      return '<section class="coluna" data-col="' + et[0] + '"><div class="col-cab"><span class="col-bola" style="background:' + et[2] + '"></span>' + esc(et[1]) + '<span class="col-n">' + dela.length + "</span></div>" +
+        (dela.length ? dela.map(cartao).join("") : '<p class="mut" style="text-align:center;padding:10px 0;font-size:12.5px">—</p>') + "</section>";
+    }).join("") + "</div>";
+  }
   function render() {
     var l = visiveis();
+    Array.prototype.forEach.call(document.querySelectorAll(".modo"), function (b) { b.classList.toggle("on", b.getAttribute("data-modo") === st.modo); });
+    document.body.classList.toggle("quadro-on", st.modo === "quadro");
+    if (st.modo === "quadro") return renderQuadro(l);
     if (!l.length) { $("lista").innerHTML = '<div class="vazio">Nenhum pedido por aqui.</div>'; return; }
     $("lista").innerHTML = l.map(function (p) {
       var itens = (p.itens || []).map(function (i) {
@@ -143,14 +217,42 @@
       }).join("");
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : '<span class="st novo">Nova</span>') + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
+  function pedidoDe(el) { var id = el.getAttribute("data-id"); return st.pedidos.filter(function (x) { return x.id === id; })[0]; }
   document.addEventListener("click", function (e) {
-    var card = e.target.closest(".ped"); if (!card) return;
-    var p = st.pedidos.filter(function (x) { return x.id === card.getAttribute("data-id"); })[0]; if (!p) return;
+    var m = e.target.closest(".modo");
+    if (m) { st.modo = m.getAttribute("data-modo"); try { localStorage.setItem("etiquetas:modo", st.modo); } catch (er) {} return render(); }
+    var card = e.target.closest(".ped, .cartao"); if (!card) return;
+    var p = pedidoDe(card); if (!p) return;
+    var mv = e.target.closest("[data-mv]");
+    if (mv) return mover(p, mv.getAttribute("data-mv"));
     if (e.target.closest("[data-png]")) { baixarPng(p); baixadas[p.id] = 1; try { localStorage.setItem("etiquetas:baixadas", JSON.stringify(baixadas)); } catch (er) {} render(); }
+  });
+  // arrastar e soltar
+  var arrastando = null;
+  document.addEventListener("dragstart", function (e) {
+    var c = e.target.closest(".cartao"); if (!c) return;
+    arrastando = pedidoDe(c); c.classList.add("arrastando");
+    try { e.dataTransfer.setData("text/plain", c.getAttribute("data-id")); e.dataTransfer.effectAllowed = "move"; } catch (er) {}
+  });
+  document.addEventListener("dragend", function () {
+    arrastando = null;
+    Array.prototype.forEach.call(document.querySelectorAll(".arrastando"), function (c) { c.classList.remove("arrastando"); });
+    Array.prototype.forEach.call(document.querySelectorAll(".alvo"), function (c) { c.classList.remove("alvo"); });
+  });
+  document.addEventListener("dragover", function (e) {
+    var col = e.target.closest(".coluna"); if (!col || !arrastando) return;
+    e.preventDefault();
+    Array.prototype.forEach.call(document.querySelectorAll(".alvo"), function (c) { if (c !== col) c.classList.remove("alvo"); });
+    col.classList.add("alvo");
+  });
+  document.addEventListener("drop", function (e) {
+    var col = e.target.closest(".coluna"); if (!col || !arrastando) return;
+    e.preventDefault(); col.classList.remove("alvo");
+    var p = arrastando; arrastando = null; mover(p, col.getAttribute("data-col"));
   });
   $("busca").addEventListener("input", function () { st.busca = this.value; render(); });
 
