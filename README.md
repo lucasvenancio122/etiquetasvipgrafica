@@ -13,3 +13,13 @@ Os temas e preços são cadastrados no admin do catálogo (botão "Etiquetas esc
 
 ## Quadro de etapas (kanban)
 `pedidos.html` abre num quadro com as etapas Novo · Arte · Produção · Expedição · Entregue. O cartão anda pelos botões ou arrastando. Voltar da Expedição para a Produção exige motivo (o banco recusa sem motivo) e o cartão fica marcado em vermelho. O botão "Lista" volta para a visão antiga. O CPF aparece no cartão quando o pedido está em Expedição ou Entregue, para conferir na retirada.
+
+### Quem move o quê
+Cada pessoa faz um movimento só, e tem um link direto da etapa dela (abre em lista grande, com um botão por pedido e seleção em lote):
+- Vendedora: `pedidos.html?etapa=novo`
+- Arte (só pedidos com tema personalizado): `pedidos.html?etapa=arte`
+- Produção: `pedidos.html?etapa=producao`
+- Expedição: `pedidos.html?etapa=expedicao`
+
+A etapa Arte é pulada automaticamente quando o pedido não tem tema personalizado: de Novo vai direto para Produção.
+O quadro completo continua em `pedidos.html`.

@@ -68,6 +68,28 @@
   .cartao .pes { display:flex; gap:5px; margin-top:7px; flex-wrap:wrap; }
   .pes .mv { border:1px solid #CBD3E6; background:#fff; border-radius:6px; padding:3px 8px; font-size:11.5px; font-weight:700; }
   .pes .mv:hover { background:var(--ink); color:#fff; }
+  .sel { display:flex; align-items:center; margin-right:2px; }
+  .sel input { width:17px; height:17px; margin:0; accent-color:#E5332B; cursor:pointer; }
+  .cartao.marcado { border-color:var(--ink); box-shadow:0 0 0 2px rgba(16,28,63,.15); }
+  .mv.forte { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .av.perso { color:#8A4FD3; background:#F3EBFC; }
+  #lote { display:none; }
+  #lote.on { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:9; gap:8px; align-items:center; flex-wrap:wrap;
+    background:#101C3F; color:#fff; padding:11px 18px; box-shadow:0 -3px 14px rgba(16,28,63,.25); }
+  #lote .btn { background:#fff; color:var(--ink); border-color:#fff; }
+  #lote .btn:hover { background:#E5332B; border-color:#E5332B; color:#fff; }
+  #lote .btn.p { background:#E5332B; border-color:#E5332B; color:#fff; }
+  /* tela de uma etapa so */
+  .etapa-cab { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .etapa-cab h2 { font-family:var(--display); margin:0; font-size:22px; }
+  .etapa-cab .col-n { background:#E1E7F3; }
+  .linha-ped { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .linha-ped.volta { border-color:#E5332B; border-width:2px; background:#FFF6F5; }
+  .linha-ped .info { flex:1; min-width:180px; }
+  .linha-ped .cd { font-weight:800; font-size:15px; }
+  .linha-ped .cn { font-weight:700; }
+  .linha-ped .ci { font-size:13px; color:var(--ink-2); }
+  .btn.grande { padding:13px 20px; font-size:15px; }
   @media (max-width:860px) {
     .quadro { grid-template-columns:repeat(5,82vw); gap:12px; scroll-snap-type:x mandatory; margin:0 -18px; padding:0 18px 12px; }
     .coluna { scroll-snap-align:center; }
@@ -92,8 +114,9 @@
 <div id="telaApp" class="oculta">
   <header><h1>Pedidos de etiquetas</h1><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
   <div class="wrap">
-    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><div class="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
+    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><div class="modos" id="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
     <div id="lista"></div>
+    <div id="lote"></div>
   </div>
 </div>
 
@@ -105,9 +128,13 @@
   var SESSAO_KEY = "etiquetas:pedidos:sessao";
   var ETAPAS = [["novo","Novo","#E5332B"],["arte","Arte","#8A4FD3"],["producao","Produção","#C77700"],["expedicao","Expedição","#0E7BBF"],["entregue","Entregue","#1FA855"]];
   function etapaNome(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return ETAPAS[i][1]; return s; }
+  function precisaArte(p) { return (p.itens || []).some(function (i) { return i.acombinar === true || (i.descricao || "").length > 1; }); }
+  function proxima(p) { var i = etapaIdx(p.status); if (p.status === "novo" && !precisaArte(p)) return "producao"; return i < ETAPAS.length - 1 ? ETAPAS[i + 1][0] : null; }
+  function anterior(p) { var i = etapaIdx(p.status); if (p.status === "producao" && !precisaArte(p)) return "novo"; return i > 0 ? ETAPAS[i - 1][0] : null; }
   function etapaCor(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return ETAPAS[i][2]; return "#6B7385"; }
   function etapaIdx(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return i; return 0; }
-  var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null, modo: "quadro" };
+  var st = { sessao: null, usuario: "", pedidos: [], filtro: "ativos", busca: "", timer: null, modo: "quadro", selecao: {}, etapa: null };
+  (function () { var m = /[?&]etapa=([a-z]+)/.exec(location.search); if (m && ["novo","arte","producao","expedicao","entregue"].indexOf(m[1]) >= 0) st.etapa = m[1]; })();
   try { st.modo = localStorage.getItem("etiquetas:modo") || "quadro"; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -143,6 +170,7 @@
   function sair() { st.sessao = null; clearInterval(st.timer); try { sessionStorage.removeItem(SESSAO_KEY); } catch (e) {} $("telaApp").classList.add("oculta"); $("telaLogin").classList.remove("oculta"); $("lPass").value = ""; }
   function entrar() {
     $("telaLogin").classList.add("oculta"); $("telaApp").classList.remove("oculta"); $("quem").textContent = st.usuario;
+    if (st.etapa) { $("modos").classList.add("oculta"); document.title = etapaNome(st.etapa) + " · Pedidos de etiquetas"; }
     carregar(); clearInterval(st.timer); st.timer = setInterval(carregar, 60000);
   }
   $("fLogin").addEventListener("submit", function (e) {
@@ -179,18 +207,59 @@
       if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render();
     }, function () { p.status = antes.s; p.devolvido = antes.d; p.motivo_devolucao = antes.m; render(); alert("Não consegui mover o pedido. Tente de novo."); });
   }
+  function moverVarios(ids, novo) {
+    var l = ids.map(function (id) { return st.pedidos.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
+    if (!l.length) return;
+    var corpoBase = { status: novo, movido_por: st.usuario.slice(0, 40) };
+    var voltando = l.filter(function (p) { return p.status === "expedicao" && novo === "producao"; });
+    if (voltando.length) {
+      var motivo = (prompt("Por que " + (voltando.length > 1 ? "esses " + voltando.length + " pedidos estão voltando" : "o pedido " + voltando[0].codigo + " está voltando") + " para a produção?") || "").trim();
+      if (motivo.length < 3) { if (motivo !== "") alert("Escreva o motivo com um pouco mais de detalhe."); return; }
+      corpoBase.devolvido = true; corpoBase.motivo_devolucao = motivo.slice(0, 300);
+    }
+    var falhou = 0, feitos = 0;
+    st.selecao = {}; render();
+    l.reduce(function (pr, p) {
+      return pr.then(function () {
+        var corpo = Object.assign({ atualizado_em: new Date().toISOString() }, corpoBase);
+        return api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), corpo)
+          .then(function (r) { if (r.length) { Object.assign(p, r[0]); feitos++; } else falhou++; }, function () { falhou++; });
+      });
+    }, Promise.resolve()).then(function () {
+      render();
+      if (falhou) alert("Movi " + feitos + " pedido(s). " + falhou + " não consegui mover; tente de novo.");
+    });
+  }
+  function selecionados() { return Object.keys(st.selecao).filter(function (k) { return st.selecao[k]; }); }
+  function barraLote() {
+    var ids = selecionados(); var el = $("lote");
+    if (!ids.length) { el.className = ""; el.innerHTML = ""; return; }
+    var l = ids.map(function (id) { return st.pedidos.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
+    var etapas = {}; l.forEach(function (p) { etapas[p.status] = 1; });
+    var mesma = Object.keys(etapas).length === 1 ? l[0] : null, bts = "";
+    if (mesma) {
+      var ant = anterior(mesma), pro = proxima(mesma);
+      if (pro) bts += '<button class="btn sm p" type="button" data-lote="' + pro + '">Mover para ' + esc(etapaNome(pro)) + " ›</button>";
+      if (ant) bts += '<button class="btn sm" type="button" data-lote="' + ant + '">‹ Voltar para ' + esc(etapaNome(ant)) + "</button>";
+    } else {
+      bts = ETAPAS.map(function (et) { return '<button class="btn sm" type="button" data-lote="' + et[0] + '">' + esc(et[1]) + "</button>"; }).join("");
+    }
+    el.className = "on";
+    el.innerHTML = '<span><b>' + ids.length + '</b> selecionado(s)</span>' + bts +
+      '<button class="btn sm" type="button" data-lote-limpa>Limpar</button>';
+  }
   function cartao(p) {
     var it = (p.itens || []), n = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0); }, 0);
     var resumo = it.slice(0, 2).map(function (i) { return i.qtd + "× " + i.modeloNome + " · " + i.temaNome; }).join("<br>") + (it.length > 2 ? "<br>+ " + (it.length - 2) + " item(ns)" : "");
-    var ix = etapaIdx(p.status);
-    var pes = "";
-    if (ix > 0) pes += '<button class="mv" type="button" data-mv="' + esc(ETAPAS[ix - 1][0]) + '">‹ ' + esc(ETAPAS[ix - 1][1]) + "</button>";
-    if (ix < ETAPAS.length - 1) pes += '<button class="mv" type="button" data-mv="' + esc(ETAPAS[ix + 1][0]) + '">' + esc(ETAPAS[ix + 1][1]) + " ›</button>";
+    var ant = anterior(p), pro = proxima(p), pes = "";
+    if (ant) pes += '<button class="mv" type="button" data-mv="' + esc(ant) + '">‹ ' + esc(etapaNome(ant)) + "</button>";
+    if (pro) pes += '<button class="mv forte" type="button" data-mv="' + esc(pro) + '">' + esc(etapaNome(pro)) + " ›</button>";
     pes += '<button class="mv" type="button" data-png>Via</button>';
-    return '<div class="cartao' + (p.devolvido ? " volta" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
-      '<div class="c1"><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
+    return '<div class="cartao' + (p.devolvido ? " volta" : "") + (st.selecao[p.id] ? " marcado" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
+      '<div class="c1"><label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
       '<div class="cn">' + esc(p.cliente) + "</div>" +
       '<div class="ci">' + resumo + " · " + n + " cartela(s)" + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
+      (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
       '<div class="pes">' + pes + "</div></div>";
   }
@@ -202,11 +271,32 @@
         (dela.length ? dela.map(cartao).join("") : '<p class="mut" style="text-align:center;padding:10px 0;font-size:12.5px">—</p>') + "</section>";
     }).join("") + "</div>";
   }
+  function linhaPed(p) {
+    var it = (p.itens || []), n = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0); }, 0);
+    var resumo = it.map(function (i) { return i.qtd + "× " + i.modeloNome + " · " + i.temaNome + (i.nome ? " (" + i.nome + ")" : ""); }).join(" | ");
+    var pro = proxima(p);
+    return '<div class="linha-ped' + (p.devolvido ? " volta" : "") + '" data-id="' + esc(p.id) + '">' +
+      '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
+      '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
+      '<div class="ci">' + esc(resumo) + " · " + n + " cartela(s)" + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
+      (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
+      (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
+      '<button class="btn sm" type="button" data-png>Via</button>' +
+      (pro ? '<button class="btn p grande" type="button" data-mv="' + esc(pro) + '">' + esc(etapaNome(pro)) + " ›</button>" : "") + "</div>";
+  }
+  function renderEtapa(l) {
+    var dela = l.filter(function (p) { return p.status === st.etapa; });
+    $("lista").innerHTML = '<div class="etapa-cab"><span class="col-bola" style="background:' + etapaCor(st.etapa) + '"></span><h2>' + esc(etapaNome(st.etapa)) + '</h2><span class="col-n">' + dela.length + '</span>' +
+      (dela.length > 1 ? '<button class="btn sm" type="button" id="marcaTodos" style="margin-left:auto">Marcar todos</button>' : "") + "</div>" +
+      (dela.length ? dela.map(linhaPed).join("") : '<div class="vazio">Nenhum pedido em ' + esc(etapaNome(st.etapa)) + " agora.</div>");
+  }
   function render() {
     var l = visiveis();
+    if (st.etapa) { document.body.classList.remove("quadro-on"); renderEtapa(l); return barraLote(); }
     Array.prototype.forEach.call(document.querySelectorAll(".modo"), function (b) { b.classList.toggle("on", b.getAttribute("data-modo") === st.modo); });
     document.body.classList.toggle("quadro-on", st.modo === "quadro");
-    if (st.modo === "quadro") return renderQuadro(l);
+    if (st.modo === "quadro") { renderQuadro(l); return barraLote(); }
+    barraLote();
     if (!l.length) { $("lista").innerHTML = '<div class="vazio">Nenhum pedido por aqui.</div>'; return; }
     $("lista").innerHTML = l.map(function (p) {
       var itens = (p.itens || []).map(function (i) {
@@ -223,9 +313,24 @@
   }
   function pedidoDe(el) { var id = el.getAttribute("data-id"); return st.pedidos.filter(function (x) { return x.id === id; })[0]; }
   document.addEventListener("click", function (e) {
+    var lt = e.target.closest("[data-lote]");
+    if (lt) return moverVarios(selecionados(), lt.getAttribute("data-lote"));
+    if (e.target.closest("[data-lote-limpa]")) { st.selecao = {}; return render(); }
+    if (e.target.id === "marcaTodos") {
+      var vis = visiveis().filter(function (p) { return p.status === st.etapa; });
+      var todos = vis.every(function (p) { return st.selecao[p.id]; });
+      vis.forEach(function (p) { st.selecao[p.id] = !todos; });
+      return render();
+    }
+    var cb = e.target.closest("[data-sel]");
+    if (cb) {
+      var cx = e.target.closest(".cartao, .linha-ped"); if (!cx) return;
+      var id = cx.getAttribute("data-id"); st.selecao[id] = !st.selecao[id];
+      return render();
+    }
     var m = e.target.closest(".modo");
     if (m) { st.modo = m.getAttribute("data-modo"); try { localStorage.setItem("etiquetas:modo", st.modo); } catch (er) {} return render(); }
-    var card = e.target.closest(".ped, .cartao"); if (!card) return;
+    var card = e.target.closest(".ped, .cartao, .linha-ped"); if (!card) return;
     var p = pedidoDe(card); if (!p) return;
     var mv = e.target.closest("[data-mv]");
     if (mv) return mover(p, mv.getAttribute("data-mv"));
