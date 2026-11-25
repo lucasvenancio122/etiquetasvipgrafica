@@ -142,7 +142,7 @@
     var c = conta(l);
     if (!c.pedidos) return "";
     return (curto ? "" : nmr(c.pedidos) + (c.pedidos === 1 ? " pedido · " : " pedidos · ")) +
-      nmr(c.cartelas) + (c.cartelas === 1 ? " cartela · " : " cartelas · ") + nmr(c.etiquetas) + " etiquetas";
+      nmr(c.cartelas) + (c.cartelas === 1 ? " cartela" : " cartelas");
   }
   function precisaArte(p) { return (p.itens || []).some(function (i) { return i.acombinar === true || (i.descricao || "").length > 1; }); }
   function proxima(p) { var i = etapaIdx(p.status); if (p.status === "novo" && !precisaArte(p)) return "producao"; return i < ETAPAS.length - 1 ? ETAPAS[i + 1][0] : null; }
@@ -290,7 +290,7 @@
     return '<div class="cartao' + (p.devolvido ? " volta" : "") + (st.selecao[p.id] ? " marcado" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
       '<div class="c1"><label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
       '<div class="cn">' + esc(p.cliente) + "</div>" +
-      '<div class="ci">' + resumo + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + " · " + nmr(conta([p]).etiquetas) + " etiquetas" + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
+      '<div class="ci">' + resumo + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
       '<div class="pes">' + pes + "</div></div>";
@@ -313,7 +313,7 @@
     return '<div class="linha-ped' + (p.devolvido ? " volta" : "") + '" data-id="' + esc(p.id) + '">' +
       '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
       '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
-      '<div class="ci">' + esc(resumo) + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + " · " + nmr(conta([p]).etiquetas) + " etiquetas" + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
+      '<div class="ci">' + esc(resumo) + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
       '<button class="btn sm" type="button" data-png>Via</button>' +
