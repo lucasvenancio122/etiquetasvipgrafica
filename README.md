@@ -23,3 +23,6 @@ Cada pessoa faz um movimento só, e tem um link direto da etapa dela (abre em li
 
 A etapa Arte é pulada automaticamente quando o pedido não tem tema personalizado: de Novo vai direto para Produção.
 O quadro completo continua em `pedidos.html`.
+
+### Excluir pedido
+Só administrador (role `admin` no cadastro de usuários) vê o botão **Excluir**, no cartão do quadro e na tela de cada etapa. Pede duas confirmações e apaga de vez — não tem como recuperar. A regra está no banco (`pedidos_etq_admin_delete` usando `vip_eh_admin()`), então quem não é admin não apaga nem por fora da tela.
