@@ -161,6 +161,8 @@
   #via .acoes { margin-top: 8px; }
   .total { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 18px; margin: 14px 0 4px; }
   .nota { font-size: 12.5px; color: var(--grey); margin: 6px 0 14px; }
+  .aviso-pg { font-size: 13.5px; line-height: 1.45; color: #8A5A00; background: #FFF4E0; border: 1px solid #F2D79B; border-radius: 10px; padding: 11px 13px; margin: 12px 0 4px; }
+  .aviso-pg b { color: #6E4700; }
   .acoes { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
   .vazio-aviso { background: #FDECEA; border: 1px solid #F5C2BE; color: #8A1C15; border-radius: 12px; padding: 14px 16px; }
   .skeleton { height: 220px; border-radius: 14px; background: linear-gradient(90deg, #eef2fa 25%, #f7f9fd 50%, #eef2fa 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
@@ -385,7 +387,8 @@
       '<label class="f">Série / turma (opcional)<input type="text" id="fSerie" maxlength="40" placeholder="Ex: Maternal 1" value="' + esc(estado.serie) + '"></label></div>' +
       '<label class="f">Observação (opcional)<textarea id="fObs" rows="2" maxlength="300" placeholder="Turma, escola, algum detalhe…">' + esc(estado.obs) + "</textarea></label>" +
       '<div class="acoes"><button class="btn sec" type="button" id="addOutro">+ Adicionar à lista e escolher outra cartela</button></div></div>' +
-      '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div><p class="nota">O pagamento e a entrega são combinados no WhatsApp.</p>' +
+      '<div class="caixa"><b style="font-size:16px">Seu pedido</b><div class="lista-ped" id="listaPed" style="margin-top:10px"></div><div class="total" id="totalBox"></div>' +
+      '<div class="aviso-pg"><b>Importante:</b> a produção do pedido começa somente após o pagamento. Combinamos o pagamento e a entrega pelo WhatsApp, logo depois que você enviar.</div>' +
       '<div class="dois"><label class="f">Seu nome completo *<input type="text" id="fCliente" maxlength="70" placeholder="Nome e sobrenome de quem faz o pedido" value="' + esc(estado.cliente) + '"></label>' +
       '<label class="f">Seu WhatsApp *<input type="tel" id="fFone" maxlength="20" placeholder="(19) 99999-9999" value="' + esc(estado.fone) + '"></label></div>' +
       '<label class="f" style="margin-top:10px">CPF (opcional)<input type="text" id="fCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="' + esc(estado.cpf) + '"></label>' +
@@ -461,7 +464,8 @@
   function confirmacao(salvo) {
     var cod = codigoPedido(), el = document.createElement("div"); el.id = "via";
     el.innerHTML = '<div class="cx"><h3>' + (salvo ? "Pedido " + esc(cod) + " registrado!" : "Quase lá!") + '</h3>' +
-      (salvo ? '<p class="nota" style="font-size:15px">Seu pedido já está com a nossa equipe. <b>Falta só um passo:</b> toque no botão abaixo e envie a mensagem no WhatsApp para combinarmos pagamento e entrega.</p>'
+      (salvo ? '<p class="nota" style="font-size:15px">Seu pedido já está com a nossa equipe. <b>Falta só um passo:</b> toque no botão abaixo e envie a mensagem no WhatsApp para combinarmos pagamento e entrega.</p>' +
+               '<div class="aviso-pg">A produção começa depois do pagamento confirmado.</div>'
              : '<p class="nota" style="font-size:15px">Não conseguimos registrar o pedido agora, mas você pode enviar todos os detalhes pelo WhatsApp que a vendedora anota para você.</p>') +
       '<div class="acoes"><button class="btn wa" type="button" id="viaAbrir">Enviar pelo WhatsApp</button><button class="btn sec" type="button" id="viaFechar">Fazer outro pedido</button></div></div>';
     document.body.appendChild(el);

@@ -112,6 +112,12 @@
   .cp:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
   a.cp { text-decoration:none; color:inherit; }
   .av.ok { color:#0F6B36; background:#D6F3E1; }
+  .dt.pg-ok { background:#D6F3E1; color:#0F6B36; }
+  .dt.pg-falta { background:#FFF4E0; color:#8A5A00; }
+  .dt.pg-sem { background:#F0F2F7; color:var(--grey); }
+  select.pag { width:auto; max-width:170px; margin:0; padding:4px 6px; font-size:12px; border-radius:6px; background:#fff; }
+  select.pag.pg-ok { border-color:#0F6B36; color:#0F6B36; font-weight:700; }
+  select.pag.pg-falta { border-color:#C77700; color:#8A5A00; font-weight:700; }
   #acaoImp:empty { display:none; }
   @media print { body { background:#fff; } }
   .fone { font-weight:700; font-size:12.5px; white-space:nowrap; }
@@ -229,6 +235,53 @@
     return iso;
   }
 
+  // ---- pagamento ----
+  function faltaPagar(p) { var f = Number(p.total || 0) - Number(p.valor_pago || 0); return f > 0 ? f : 0; }
+  function classePag(p) { return p.pagamento === "pago" ? "pg-ok" : (p.pagamento ? "pg-falta" : "pg-sem"); }
+  function rotuloPag(p) {
+    if (p.pagamento === "pago") return "✔ pago";
+    if (p.pagamento === "retirada") return "paga na retirada";
+    if (p.pagamento === "entrada") return "entrada " + brl(p.valor_pago) + " · falta " + brl(faltaPagar(p));
+    return "pagamento?";
+  }
+  function campoPagamento(p) {
+    var v = p.pagamento || "";
+    var op = function (val, txt) { return '<option value="' + val + '"' + (v === val ? " selected" : "") + ">" + txt + "</option>"; };
+    return '<select class="pag ' + classePag(p) + '" data-pag draggable="false" title="Situação do pagamento">' +
+      op("", "pagamento?") + op("pago", "Pago") + op("retirada", "Paga na retirada") + op("entrada", "Deu entrada…") + "</select>" +
+      (p.pagamento === "entrada" ? '<span class="dt pg-falta">falta ' + esc(brl(faltaPagar(p))) + "</span>" : "");
+  }
+  function parseValor(t) {
+    t = String(t || "").replace(/[^\d,.]/g, "").trim();
+    if (!t) return null;
+    if (t.indexOf(",") > -1) t = t.replace(/\./g, "").replace(",", ".");
+    var n = Number(t);
+    return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
+  }
+  function salvarPagamento(p, escolha) {
+    var corpo;
+    if (escolha === "entrada") {
+      var dica = "Quanto o cliente já pagou do pedido " + p.codigo + "?" +
+        (Number(p.total) > 0 ? "\n\nTotal do pedido: " + brl(p.total) : "") + "\n\nEscreva só o valor, ex: 20 ou 20,50";
+      var t = prompt(dica, p.valor_pago ? String(p.valor_pago).replace(".", ",") : "");
+      if (t === null) return render();
+      var n = parseValor(t);
+      if (!n) { alert("Não entendi esse valor. Escreva só o número, ex: 20 ou 20,50."); return render(); }
+      if (Number(p.total) > 0 && n >= Number(p.total)) {
+        alert("A entrada (" + brl(n) + ") tem que ser menor que o total (" + brl(p.total) + ").\n\nSe já pagou tudo, marque como Pago.");
+        return render();
+      }
+      corpo = { pagamento: "entrada", valor_pago: n };
+    } else {
+      corpo = { pagamento: escolha || null, valor_pago: null };
+    }
+    var antes = { g: p.pagamento, v: p.valor_pago };
+    Object.assign(p, corpo); render();
+    api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), corpo).then(function (r) {
+      if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render();
+    }, function () { p.pagamento = antes.g; p.valor_pago = antes.v; render(); alert("Não consegui salvar o pagamento. Tente de novo."); });
+  }
+
   // ---- telefone ----
   function foneDig(f) { return String(f || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, ""); }
   function foneBr(f) {
@@ -318,7 +371,7 @@
     api("GET", "pedidos_etiquetas?select=*&order=criado_em.desc&limit=300").then(function (l) {
       st.pedidos = l;
       var f = document.activeElement;
-      if (f && f.hasAttribute && f.hasAttribute("data-data")) return; // não atropela quem está digitando a data
+      if (f && f.hasAttribute && (f.hasAttribute("data-data") || f.hasAttribute("data-pag"))) return; // não atropela quem está preenchendo
       render();
     },
       function (er) { $("lista").innerHTML = '<div class="vazio">Não consegui carregar os pedidos (' + esc(er.message) + ').</div>'; });
@@ -500,6 +553,7 @@
       '<div class="cn">' + esc(p.cliente) + "</div>" +
       '<div class="ci">' + resumo + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
       '<div class="linha-i">' + campoData(p) + "</div>" +
+      '<div class="linha-i">' + campoPagamento(p) + "</div>" +
       (foneDig(p.telefone) ? '<div class="linha-i">' + blocoFone(p) + "</div>" : "") +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (jaImpressa(p) ? '<span class="av ok">✔ impressa</span>' : "") +
@@ -522,7 +576,7 @@
       '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
       '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
       '<div class="ci">' + esc(resumo) + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
-      '<div class="linha-i">' + campoData(p) + blocoFone(p) + (jaImpressa(p) ? '<span class="av ok">✔ impressa</span>' : "") + "</div>" +
+      '<div class="linha-i">' + campoData(p) + campoPagamento(p) + blocoFone(p) + (jaImpressa(p) ? '<span class="av ok">✔ impressa</span>' : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
       '<button class="btn sm" type="button" data-det>Mais informações</button>' +
@@ -556,7 +610,7 @@
       var itens = itensHtml(p);
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(foneBr(p.telefone)) + "</a>" : "") + (fone ? '<button class="cp" type="button" data-cp="' + esc(foneDig(p.telefone)) + '">copiar</button>' : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + '<span class="dt ' + classeData(p.data_entrega) + '">entrega: ' + esc(rotuloData(p.data_entrega, true)) + "</span>" + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (jaImpressa(p) ? '<span class="st pago">✔ impressa</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(foneBr(p.telefone)) + "</a>" : "") + (fone ? '<button class="cp" type="button" data-cp="' + esc(foneDig(p.telefone)) + '">copiar</button>' : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + '<span class="dt ' + classeData(p.data_entrega) + '">entrega: ' + esc(rotuloData(p.data_entrega, true)) + "</span>" + '<span class="dt ' + classePag(p) + '">' + esc(rotuloPag(p)) + "</span>" + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (jaImpressa(p) ? '<span class="st pago">✔ impressa</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
@@ -587,6 +641,8 @@
       linha("Pedido feito em", esc(dataBr(p.criado_em))) +
       linha("Quantidade", nmr(cartelas) + (cartelas === 1 ? " cartela" : " cartelas") + " · " + nmr(etiquetas) + " etiquetas") +
       linha("Total", "<b style='min-width:0;color:inherit;font-size:14px'>" + esc(totalTxt(p)) + "</b>") +
+      linha("Pagamento", campoPagamento(p) +
+        (p.pagamento === "entrada" ? '<span class="mut">pagou ' + esc(brl(p.valor_pago)) + " de " + esc(brl(p.total)) + "</span>" : "")) +
       linha("Via", jaImpressa(p)
         ? '<span class="av ok">✔ impressa ' + esc(dataBr(p.impressa_em)) + (p.impressa_por ? " · " + esc(p.impressa_por) : "") + "</span>" +
           '<button class="cp" type="button" data-desimp>tirar a marca</button>'
@@ -638,10 +694,10 @@
     if (e.target.closest("[data-png]")) return baixarPng(p);
   });
   document.addEventListener("change", function (e) {
-    var inp = e.target.closest("[data-data]"); if (!inp) return;
     var cx = e.target.closest(".det-cx, .ped, .cartao, .linha-ped"); if (!cx) return;
     var p = pedidoDe(cx); if (!p) return;
-    salvarData(p, inp.value);
+    if (e.target.closest("[data-data]")) return salvarData(p, e.target.value);
+    if (e.target.closest("[data-pag]")) return salvarPagamento(p, e.target.value);
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && st.det) fechaDet(); });
   // arrastar e soltar
@@ -686,7 +742,7 @@
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; ctx.font = "600 24px Inter, sans-serif";
       var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0) + (i.descricao ? quebra(ctx, "Personalizado: " + i.descricao, 520).length : 0)) * 38 + 24); });
-      var temPerso = itens.some(function (i) { return i.acombinar; }), H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + (temPerso ? 160 : 100); cv.height = H;
+      var temPerso = itens.some(function (i) { return i.acombinar; }), H = 330 + alt.reduce(function (a, b) { return a + b + 20; }, 0) + (temPerso ? 160 : 100) + (p.pagamento ? 48 : 0); cv.height = H;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#D6231A"; ctx.fillRect(0, 0, W, 110);
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
       ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
@@ -708,7 +764,14 @@
         y += h + 20;
       });
       ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(totalTxt(p), W - P - 28, y + 56); ctx.textAlign = "left";
-      if (itens.some(function (i) { return i.acombinar; })) { y += 100; ctx.fillStyle = "#D6231A"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("+ tema personalizado: valor a combinar com a cliente", P, y); y -= 100; }
+      var yn = y + 100;
+      if (temPerso) { ctx.fillStyle = "#D6231A"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("+ tema personalizado: valor a combinar com a cliente", P, yn); yn += 42; }
+      if (p.pagamento) {
+        ctx.font = "800 28px Inter, sans-serif";
+        if (p.pagamento === "pago") { ctx.fillStyle = "#0F6B36"; ctx.fillText("✔ PEDIDO PAGO", P, yn); }
+        else if (p.pagamento === "retirada") { ctx.fillStyle = "#D6231A"; ctx.fillText("RECEBER NA RETIRADA" + (Number(p.total) > 0 ? ": " + brl(p.total) : ""), P, yn); }
+        else { ctx.fillStyle = "#D6231A"; ctx.fillText("ENTRADA " + brl(p.valor_pago) + "  ·  FALTA RECEBER " + brl(faltaPagar(p)), P, yn); }
+      }
       return cv;
     });
   }
