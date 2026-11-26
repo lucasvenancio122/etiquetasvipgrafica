@@ -101,6 +101,26 @@
     .modo { flex:1; }
   }
   .ver { font-weight:700; color:var(--brand); }
+  /* data de entrega, telefone e detalhe */
+  .linha-i { display:flex; align-items:center; gap:5px; margin-top:6px; flex-wrap:wrap; }
+  .dt { display:inline-block; font-weight:800; font-size:11.5px; border-radius:6px; padding:3px 7px; background:#EBF0FA; color:var(--ink); white-space:nowrap; }
+  .dt.sem { background:#FDEDEB; color:#B3261E; }
+  .dt.perto { background:#FFF4E0; color:#8A5A00; }
+  .dt.hoje, .dt.atraso { background:#B3261E; color:#fff; }
+  input.data { width:auto; max-width:148px; margin:0; padding:4px 7px; font-size:12px; border-radius:6px; }
+  .cp { border:1px solid #CBD3E6; background:#fff; border-radius:6px; padding:3px 8px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+  .cp:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
+  a.cp { text-decoration:none; color:inherit; }
+  .fone { font-weight:700; font-size:12.5px; white-space:nowrap; }
+  #det { position:fixed; inset:0; z-index:20; background:rgba(16,28,63,.55); display:flex; align-items:flex-start; justify-content:center; padding:18px; overflow:auto; }
+  .det-cx { background:#fff; border-radius:16px; max-width:640px; width:100%; padding:16px 20px 20px; box-shadow:0 14px 40px rgba(16,28,63,.3); }
+  .det-cab { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .det-cab h2 { font-family:var(--display); margin:0; font-size:20px; }
+  .det-cab .fecha { margin-left:auto; border:1px solid #CBD3E6; background:#fff; border-radius:8px; width:34px; height:34px; font-size:18px; font-weight:700; line-height:1; }
+  .det-cab .fecha:hover { background:var(--ink); color:#fff; }
+  .det-l { display:grid; gap:6px; margin:12px 0; font-size:13.5px; }
+  .det-l > div { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .det-l b { min-width:116px; color:var(--grey); font-weight:600; font-size:12.5px; }
 </style>
 </head>
 <body>
@@ -122,6 +142,7 @@
     <div id="lista"></div>
     <div id="lote"></div>
   </div>
+  <div id="det" class="oculta"></div>
 </div>
 
 <script>
@@ -149,7 +170,7 @@
   function anterior(p) { var i = etapaIdx(p.status); if (p.status === "producao" && !precisaArte(p)) return "novo"; return i > 0 ? ETAPAS[i - 1][0] : null; }
   function etapaCor(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return ETAPAS[i][2]; return "#6B7385"; }
   function etapaIdx(s) { for (var i = 0; i < ETAPAS.length; i++) if (ETAPAS[i][0] === s) return i; return 0; }
-  var st = { sessao: null, usuario: "", admin: false, pedidos: [], filtro: "ativos", busca: "", timer: null, modo: "quadro", selecao: {}, etapa: null };
+  var st = { sessao: null, usuario: "", admin: false, pedidos: [], filtro: "ativos", busca: "", timer: null, modo: "quadro", selecao: {}, etapa: null, det: null };
   (function () { var m = /[?&]etapa=([a-z]+)/.exec(location.search); if (m && ["novo","arte","producao","expedicao","entregue"].indexOf(m[1]) >= 0) st.etapa = m[1]; })();
   try { st.modo = localStorage.getItem("etiquetas:modo") || "quadro"; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };
@@ -159,7 +180,81 @@
   function brl(n) { return "R$ " + Number(n).toFixed(2).replace(".", ","); }
   function p2(n) { return (n < 10 ? "0" : "") + n; }
   function dataBr(iso) { var d = new Date(iso); return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
-  
+
+  // ---- data de entrega ----
+  function hojeISO() { var d = new Date(); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()); }
+  function diaBr(d) { var pa = String(d || "").slice(0, 10).split("-"); return pa.length === 3 ? pa[2] + "/" + pa[1] + "/" + pa[0] : ""; }
+  function diasAte(d) {
+    if (!d) return null;
+    var a = String(d).slice(0, 10).split("-"), b = hojeISO().split("-");
+    return Math.round((Date.UTC(+a[0], a[1] - 1, +a[2]) - Date.UTC(+b[0], b[1] - 1, +b[2])) / 86400000);
+  }
+  function classeData(d) { var n = diasAte(d); if (n === null) return "sem"; if (n < 0) return "atraso"; if (n === 0) return "hoje"; return n <= 2 ? "perto" : ""; }
+  function rotuloData(d, completo) {
+    if (!d) return "sem data";
+    var n = diasAte(d), s = completo ? diaBr(d) : diaBr(d).slice(0, 5);
+    if (n < 0) return s + " · atrasado";
+    if (n === 0) return s + " · hoje";
+    if (n === 1) return s + " · amanhã";
+    return s;
+  }
+  function podeEditarData(p) { return p.status === "novo" || p.status === "arte" || st.admin; }
+  function exigeData(etapa) { return etapa === "producao" || etapa === "expedicao" || etapa === "entregue"; }
+  function campoData(p) {
+    if (podeEditarData(p)) return '<input type="date" class="data" data-data draggable="false" min="' + hojeISO() + '" value="' + esc(String(p.data_entrega || "").slice(0, 10)) + '" title="Data de entrega">';
+    return '<span class="dt ' + classeData(p.data_entrega) + '">' + esc(rotuloData(p.data_entrega)) + "</span>";
+  }
+  function parseData(t) {
+    t = String(t || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+    var m = /^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?$/.exec(t);
+    if (!m) return null;
+    var d = +m[1], mes = +m[2], ano = m[3] ? +m[3] : null;
+    if (ano !== null && ano < 100) ano += 2000;
+    if (d < 1 || d > 31 || mes < 1 || mes > 12) return null;
+    var h = new Date();
+    if (ano === null) { ano = h.getFullYear(); if (new Date(ano, mes - 1, d) < new Date(h.getFullYear(), h.getMonth(), h.getDate())) ano++; }
+    var dt = new Date(ano, mes - 1, d);
+    if (dt.getDate() !== d || dt.getMonth() !== mes - 1) return null;
+    return ano + "-" + p2(mes) + "-" + p2(d);
+  }
+  function pedeData(p, etapa) {
+    var t = prompt("Falta a data de entrega do pedido " + p.codigo + " (" + p.cliente + ").\n\nSem data não dá para mandar para a " + etapaNome(etapa).toLowerCase() + ".\nEscreva o dia e o mês, assim: 05/12", "");
+    if (t === null || !String(t).trim()) return null;
+    var iso = parseData(t);
+    if (!iso) { alert("Não entendi essa data. Escreva assim: 05/12 (ou 05/12/2026)."); return null; }
+    return iso;
+  }
+
+  // ---- telefone ----
+  function foneDig(f) { return String(f || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, ""); }
+  function foneBr(f) {
+    var d = foneDig(f);
+    if (d.length === 11) return "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
+    if (d.length === 10) return "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
+    return String(f || "");
+  }
+  function blocoFone(p) {
+    var d = foneDig(p.telefone);
+    if (!d) return "";
+    return '<span class="fone">' + esc(foneBr(p.telefone)) + '</span><button class="cp" type="button" data-cp="' + esc(d) + '">copiar</button>';
+  }
+  function copiar(txt, bt) {
+    var volta = bt ? bt.textContent : "";
+    var ok = function () { if (bt) { bt.textContent = "copiado!"; setTimeout(function () { bt.textContent = volta; }, 1200); } };
+    var naMao = function () {
+      var t = document.createElement("textarea");
+      t.value = txt; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.top = "-1000px";
+      document.body.appendChild(t); t.select();
+      var deu = false;
+      try { deu = document.execCommand("copy"); } catch (e) {}
+      t.remove();
+      if (deu) ok(); else prompt("Copie daqui:", txt);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, naMao);
+    else naMao();
+  }
+
   function imgSeg(u) { u = String(u || ""); return /^(https:\/\/|temas\/[A-Za-z0-9\/_.-]+\.(jpg|png)$)/.test(u) ? u : ""; }
 
   // ---- sessão (mesmos usuários do sistema, sessão própria desta página) ----
@@ -211,11 +306,18 @@
     api("DELETE", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id)).then(function (r) {
       if (!r.length) throw new Error("sem permissão");
       st.pedidos = st.pedidos.filter(function (x) { return x.id !== p.id; });
-      delete st.selecao[p.id]; render();
+      delete st.selecao[p.id];
+      if (st.det === p.id) fechaDet();
+      render();
     }, function () { alert("Não consegui apagar. Só administrador pode excluir pedido."); });
   }
   function carregar() {
-    api("GET", "pedidos_etiquetas?select=*&order=criado_em.desc&limit=300").then(function (l) { st.pedidos = l; render(); },
+    api("GET", "pedidos_etiquetas?select=*&order=criado_em.desc&limit=300").then(function (l) {
+      st.pedidos = l;
+      var f = document.activeElement;
+      if (f && f.hasAttribute && f.hasAttribute("data-data")) return; // não atropela quem está digitando a data
+      render();
+    },
       function (er) { $("lista").innerHTML = '<div class="vazio">Não consegui carregar os pedidos (' + esc(er.message) + ').</div>'; });
   }
   var baixadas = {}; try { baixadas = JSON.parse(localStorage.getItem("etiquetas:baixadas") || "{}"); } catch (e) {}
@@ -232,11 +334,25 @@
       if (motivo.length < 3) { if (motivo !== "") alert("Escreva o motivo com um pouco mais de detalhe."); return; }
       corpo.devolvido = true; corpo.motivo_devolucao = motivo.slice(0, 300);
     }
-    var antes = { s: p.status, d: p.devolvido, m: p.motivo_devolucao };
+    if (exigeData(novo) && !p.data_entrega) {
+      var iso = pedeData(p, novo);
+      if (!iso) return;
+      corpo.data_entrega = iso;
+    }
+    var antes = { s: p.status, d: p.devolvido, m: p.motivo_devolucao, e: p.data_entrega };
     Object.assign(p, corpo); render();
     api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), corpo).then(function (r) {
       if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render();
-    }, function () { p.status = antes.s; p.devolvido = antes.d; p.motivo_devolucao = antes.m; render(); alert("Não consegui mover o pedido. Tente de novo."); });
+    }, function () { p.status = antes.s; p.devolvido = antes.d; p.motivo_devolucao = antes.m; p.data_entrega = antes.e; render(); alert("Não consegui mover o pedido. Tente de novo."); });
+  }
+  function salvarData(p, valor) {
+    var iso = valor ? String(valor).slice(0, 10) : null;
+    if (iso === (p.data_entrega ? String(p.data_entrega).slice(0, 10) : null)) return;
+    var antes = p.data_entrega;
+    p.data_entrega = iso; render();
+    api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), { data_entrega: iso }).then(function (r) {
+      if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render();
+    }, function () { p.data_entrega = antes; render(); alert("Não consegui salvar a data de entrega. Tente de novo."); });
   }
   function moverVarios(ids, novo) {
     var l = ids.map(function (id) { return st.pedidos.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
@@ -248,8 +364,17 @@
       if (motivo.length < 3) { if (motivo !== "") alert("Escreva o motivo com um pouco mais de detalhe."); return; }
       corpoBase.devolvido = true; corpoBase.motivo_devolucao = motivo.slice(0, 300);
     }
+    var deixados = exigeData(novo) ? l.filter(function (p) { return !p.data_entrega; }) : [];
+    if (deixados.length) {
+      alert("Falta a data de entrega em " + deixados.length + " pedido(s):\n\n" +
+        deixados.map(function (p) { return p.codigo + " · " + p.cliente; }).join("\n") +
+        "\n\nDeixei esses de lado, marcados. Preencha a data neles e mova de novo.");
+      l = l.filter(function (p) { return p.data_entrega; });
+    }
     var falhou = 0, feitos = 0;
-    st.selecao = {}; render();
+    st.selecao = {}; deixados.forEach(function (p) { st.selecao[p.id] = true; });
+    if (!l.length) return render();
+    render();
     l.reduce(function (pr, p) {
       return pr.then(function () {
         var corpo = Object.assign({ atualizado_em: new Date().toISOString() }, corpoBase);
@@ -279,18 +404,29 @@
     el.innerHTML = '<span><b>' + ids.length + '</b> selecionado(s)</span>' + bts +
       '<button class="btn sm" type="button" data-lote-limpa>Limpar</button>';
   }
+  function itensHtml(p) {
+    return (p.itens || []).map(function (i) {
+      var im = imgSeg(i.foto);
+      return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + (i.acombinar ? "<b>valor a combinar</b>" : brl(i.preco) + " cada") +
+        (i.descricao ? "<br><b>Tema personalizado:</b> " + esc(i.descricao) : "") +
+        (i.nome ? "<br>Nome: <b>" + esc(i.nome) + "</b>" : "") + (i.serie ? " · Série: <b>" + esc(i.serie) + "</b>" : "") + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</span></div></div>";
+    }).join("");
+  }
   function cartao(p) {
     var it = (p.itens || []), n = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0); }, 0);
-    var resumo = it.slice(0, 2).map(function (i) { return i.qtd + "× " + i.modeloNome + " · " + i.temaNome; }).join("<br>") + (it.length > 2 ? "<br>+ " + (it.length - 2) + " item(ns)" : "");
+    var resumo = it.slice(0, 2).map(function (i) { return esc(i.qtd + "× " + i.modeloNome + " · " + i.temaNome); }).join("<br>") + (it.length > 2 ? "<br>+ " + (it.length - 2) + " item(ns)" : "");
     var ant = anterior(p), pro = proxima(p), pes = "";
     if (ant) pes += '<button class="mv" type="button" data-mv="' + esc(ant) + '">‹ ' + esc(etapaNome(ant)) + "</button>";
     if (pro) pes += '<button class="mv forte" type="button" data-mv="' + esc(pro) + '">' + esc(etapaNome(pro)) + " ›</button>";
+    pes += '<button class="mv" type="button" data-det>Mais informações</button>';
     pes += '<button class="mv" type="button" data-png>Via</button>';
     if (st.admin) pes += '<button class="mv apaga" type="button" data-del title="Apagar o pedido">Excluir</button>';
     return '<div class="cartao' + (p.devolvido ? " volta" : "") + (st.selecao[p.id] ? " marcado" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
       '<div class="c1"><label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
       '<div class="cn">' + esc(p.cliente) + "</div>" +
       '<div class="ci">' + resumo + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
+      '<div class="linha-i">' + campoData(p) + "</div>" +
+      (foneDig(p.telefone) ? '<div class="linha-i">' + blocoFone(p) + "</div>" : "") +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
       '<div class="pes">' + pes + "</div></div>";
@@ -311,8 +447,10 @@
       '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
       '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
       '<div class="ci">' + esc(resumo) + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
+      '<div class="linha-i">' + campoData(p) + blocoFone(p) + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
+      '<button class="btn sm" type="button" data-det>Mais informações</button>' +
       '<button class="btn sm" type="button" data-png>Via</button>' +
       (st.admin ? '<button class="btn sm apaga" type="button" data-del>Excluir</button>' : "") +
       (pro ? '<button class="btn p grande" type="button" data-mv="' + esc(pro) + '">' + esc(etapaNome(pro)) + " ›</button>" : "") + "</div>";
@@ -331,6 +469,7 @@
   function render() {
     var l = visiveis();
     totalCanto(l);
+    if (st.det) desenhaDet();
     if (st.etapa) { document.body.classList.remove("quadro-on"); renderEtapa(l); return barraLote(); }
     Array.prototype.forEach.call(document.querySelectorAll(".modo"), function (b) { b.classList.toggle("on", b.getAttribute("data-modo") === st.modo); });
     document.body.classList.toggle("quadro-on", st.modo === "quadro");
@@ -338,20 +477,57 @@
     barraLote();
     if (!l.length) { $("lista").innerHTML = '<div class="vazio">Nenhum pedido por aqui.</div>'; return; }
     $("lista").innerHTML = l.map(function (p) {
-      var itens = (p.itens || []).map(function (i) {
-        var im = imgSeg(i.foto);
-        return '<div class="it">' + (im ? '<img src="' + esc(im) + '" alt="" loading="lazy">' : "") + "<div><b>" + esc(i.qtd) + "× " + esc(i.modeloNome) + " · " + esc(i.temaNome) + "</b><span>" + esc(i.etiquetas) + " etiquetas · " + (i.acombinar ? "<b>valor a combinar</b>" : brl(i.preco) + " cada") +
-          (i.descricao ? "<br><b>Tema personalizado:</b> " + esc(i.descricao) : "") +
-          (i.nome ? "<br>Nome: <b>" + esc(i.nome) + "</b>" : "") + (i.serie ? " · Série: <b>" + esc(i.serie) + "</b>" : "") + (i.obs ? "<br>Obs: " + esc(i.obs) : "") + "</span></div></div>";
-      }).join("");
+      var itens = itensHtml(p);
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(p.telefone) + "</a>" : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(foneBr(p.telefone)) + "</a>" : "") + (fone ? '<button class="cp" type="button" data-cp="' + esc(foneDig(p.telefone)) + '">copiar</button>' : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + '<span class="dt ' + classeData(p.data_entrega) + '">entrega: ' + esc(rotuloData(p.data_entrega, true)) + "</span>" + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
   function pedidoDe(el) { var id = el.getAttribute("data-id"); return st.pedidos.filter(function (x) { return x.id === id; })[0]; }
+  // ---- janela de detalhe ----
+  function abreDet(p) { st.det = p.id; desenhaDet(); }
+  function fechaDet() { st.det = null; $("det").classList.add("oculta"); $("det").innerHTML = ""; }
+  function desenhaDet() {
+    var p = st.pedidos.filter(function (x) { return x.id === st.det; })[0];
+    if (!p) return fechaDet();
+    var it = p.itens || [];
+    var cartelas = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0); }, 0);
+    var etiquetas = it.reduce(function (a, i) { return a + (Number(i.qtd) || 0) * (Number(i.etiquetas) || 0); }, 0);
+    var dig = foneDig(p.telefone);
+    var linha = function (rot, conteudo) { return "<div><b>" + rot + "</b>" + conteudo + "</div>"; };
+    var html = '<div class="det-cx" data-id="' + esc(p.id) + '">' +
+      '<div class="det-cab"><h2>' + esc(p.codigo) + '</h2>' +
+      '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" +
+      '<button class="fecha" type="button" data-fecha title="Fechar">×</button></div>' +
+      '<div class="det-l">' +
+      linha("Cliente", "<b style='min-width:0;color:inherit;font-size:14px'>" + esc(p.cliente) + "</b>") +
+      (dig ? linha("Telefone", '<span class="fone">' + esc(foneBr(p.telefone)) + '</span><button class="cp" type="button" data-cp="' + esc(dig) + '">copiar</button>' +
+        '<a class="cp" target="_blank" rel="noopener" href="https://wa.me/55' + esc(dig) + '">WhatsApp</a>') : "") +
+      (p.cpf ? linha("CPF", esc(cpfBr(p.cpf)) + '<button class="cp" type="button" data-cp="' + esc(String(p.cpf).replace(/\D/g, "")) + '">copiar</button>') : "") +
+      linha("Data de entrega", podeEditarData(p)
+        ? campoData(p)
+        : '<span class="dt ' + classeData(p.data_entrega) + '">' + esc(rotuloData(p.data_entrega, true)) + "</span>") +
+      linha("Pedido feito em", esc(dataBr(p.criado_em))) +
+      linha("Quantidade", nmr(cartelas) + (cartelas === 1 ? " cartela" : " cartelas") + " · " + nmr(etiquetas) + " etiquetas") +
+      linha("Total", "<b style='min-width:0;color:inherit;font-size:14px'>" + esc(totalTxt(p)) + "</b>") +
+      (p.movido_por ? linha("Última mudança", esc(p.movido_por) + " · " + esc(dataBr(p.atualizado_em))) : "") +
+      (precisaArte(p) ? linha("Arte", '<span class="av perso">tem tema personalizado · precisa de arte</span>') : "") +
+      (p.devolvido && p.motivo_devolucao ? linha("Voltou da expedição", '<span class="av">' + esc(p.motivo_devolucao) + "</span>") : "") +
+      (p.nota ? linha("Observação", esc(p.nota)) : "") +
+      "</div>" +
+      '<div class="itens">' + itensHtml(p) + "</div>" +
+      '<div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button>' +
+      (st.admin ? '<button class="btn apaga" type="button" data-del>Excluir pedido</button>' : "") +
+      '<button class="btn" type="button" data-fecha style="margin-left:auto">Fechar</button></div></div>';
+    $("det").innerHTML = html;
+    $("det").classList.remove("oculta");
+  }
   document.addEventListener("click", function (e) {
+    var cp = e.target.closest("[data-cp]");
+    if (cp) { e.preventDefault(); return copiar(cp.getAttribute("data-cp"), cp); }
+    if (e.target.closest("[data-fecha]")) return fechaDet();
+    if (e.target.id === "det") return fechaDet();
     var lt = e.target.closest("[data-lote]");
     if (lt) return moverVarios(selecionados(), lt.getAttribute("data-lote"));
     if (e.target.closest("[data-lote-limpa]")) { st.selecao = {}; return render(); }
@@ -369,16 +545,25 @@
     }
     var m = e.target.closest(".modo");
     if (m) { st.modo = m.getAttribute("data-modo"); try { localStorage.setItem("etiquetas:modo", st.modo); } catch (er) {} return render(); }
-    var card = e.target.closest(".ped, .cartao, .linha-ped"); if (!card) return;
+    var card = e.target.closest(".det-cx, .ped, .cartao, .linha-ped"); if (!card) return;
     var p = pedidoDe(card); if (!p) return;
+    if (e.target.closest("[data-det]")) return abreDet(p);
     var mv = e.target.closest("[data-mv]");
     if (mv) return mover(p, mv.getAttribute("data-mv"));
     if (e.target.closest("[data-del]")) return excluir(p);
     if (e.target.closest("[data-png]")) { baixarPng(p); baixadas[p.id] = 1; try { localStorage.setItem("etiquetas:baixadas", JSON.stringify(baixadas)); } catch (er) {} render(); }
   });
+  document.addEventListener("change", function (e) {
+    var inp = e.target.closest("[data-data]"); if (!inp) return;
+    var cx = e.target.closest(".det-cx, .ped, .cartao, .linha-ped"); if (!cx) return;
+    var p = pedidoDe(cx); if (!p) return;
+    salvarData(p, inp.value);
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && st.det) fechaDet(); });
   // arrastar e soltar
   var arrastando = null;
   document.addEventListener("dragstart", function (e) {
+    if (e.target.closest("input, button, select, textarea, a, label")) { e.preventDefault(); return; }
     var c = e.target.closest(".cartao"); if (!c) return;
     arrastando = pedidoDe(c); c.classList.add("arrastando");
     try { e.dataTransfer.setData("text/plain", c.getAttribute("data-id")); e.dataTransfer.effectAllowed = "move"; } catch (er) {}
