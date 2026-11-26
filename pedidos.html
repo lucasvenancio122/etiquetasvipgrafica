@@ -111,6 +111,9 @@
   .cp { border:1px solid #CBD3E6; background:#fff; border-radius:6px; padding:3px 8px; font-size:11.5px; font-weight:700; white-space:nowrap; }
   .cp:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
   a.cp { text-decoration:none; color:inherit; }
+  .av.ok { color:#0F6B36; background:#D6F3E1; }
+  #acaoImp:empty { display:none; }
+  @media print { body { background:#fff; } }
   .fone { font-weight:700; font-size:12.5px; white-space:nowrap; }
   #det { position:fixed; inset:0; z-index:20; background:rgba(16,28,63,.55); display:flex; align-items:flex-start; justify-content:center; padding:18px; overflow:auto; }
   .det-cx { background:#fff; border-radius:16px; max-width:640px; width:100%; padding:16px 20px 20px; box-shadow:0 14px 40px rgba(16,28,63,.3); }
@@ -138,7 +141,7 @@
 <div id="telaApp" class="oculta">
   <header><h1>Pedidos de etiquetas</h1><span id="totalTopo" class="chip-total"></span><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
   <div class="wrap">
-    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><div class="modos" id="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
+    <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><span id="acaoImp"></span><div class="modos" id="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
     <div id="lista"></div>
     <div id="lote"></div>
   </div>
@@ -320,7 +323,6 @@
     },
       function (er) { $("lista").innerHTML = '<div class="vazio">Não consegui carregar os pedidos (' + esc(er.message) + ').</div>'; });
   }
-  var baixadas = {}; try { baixadas = JSON.parse(localStorage.getItem("etiquetas:baixadas") || "{}"); } catch (e) {}
   function visiveis() {
     var q = st.busca.trim().toLowerCase();
     var qn = q.replace(/[.\-\s]/g, "");
@@ -386,6 +388,78 @@
       if (falhou) alert("Movi " + feitos + " pedido(s). " + falhou + " não consegui mover; tente de novo.");
     });
   }
+  // ---- vias impressas ----
+  function jaImpressa(p) { return !!p.impressa_em; }
+  function pendentesProducao() { return visiveis().filter(function (p) { return p.status === "producao" && !jaImpressa(p); }); }
+  function botaoImprimir() {
+    var n = pendentesProducao().length;
+    $("acaoImp").innerHTML = n
+      ? '<button class="btn p" type="button" id="btImprimir">Imprimir ' + n + (n > 1 ? " vias" : " via") + " da produção</button>"
+      : "";
+  }
+  function marcarImpressas(l) {
+    var corpo = { impressa_em: new Date().toISOString(), impressa_por: st.usuario.slice(0, 40) };
+    l.forEach(function (p) { Object.assign(p, corpo); });
+    render();
+    var falhou = 0;
+    return l.reduce(function (pr, p) {
+      return pr.then(function () {
+        return api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), corpo)
+          .then(function (r) { if (r.length) Object.assign(p, r[0]); else falhou++; }, function () { falhou++; });
+      });
+    }, Promise.resolve()).then(function () {
+      if (falhou) { carregar(); alert("Imprimi, mas não consegui marcar " + falhou + " via(s) como impressa. Clique em Atualizar e confira."); }
+      else render();
+    });
+  }
+  function desmarcarImpressa(p) {
+    if (!confirm("Tirar a marca de impressa do pedido " + p.codigo + "?\n\nEle volta para a fila de impressão.")) return;
+    var antes = { e: p.impressa_em, q: p.impressa_por };
+    p.impressa_em = null; p.impressa_por = null; render();
+    api("PATCH", "pedidos_etiquetas?id=eq." + encodeURIComponent(p.id), { impressa_em: null, impressa_por: null })
+      .then(function (r) { if (!r.length) throw new Error("sem permissão"); Object.assign(p, r[0]); render(); },
+        function () { p.impressa_em = antes.e; p.impressa_por = antes.q; render(); alert("Não consegui tirar a marca. Tente de novo."); });
+  }
+  function imprimirVias(l, pergunta) {
+    if (!l.length) return;
+    if (pergunta !== false && !confirm("Imprimir " + l.length + (l.length > 1 ? " vias" : " via") + "?\n\nDepois de mandar pra impressora elas ficam marcadas como impressas."))
+      return;
+    var bt = $("btImprimir"); if (bt) { bt.disabled = true; bt.textContent = "Preparando…"; }
+    Promise.all(l.map(viaCanvas)).then(function (cvs) {
+      imprimirCanvases(cvs);
+      return marcarImpressas(l);
+    }).then(function () { botaoImprimir(); }, function () {
+      botaoImprimir();
+      alert("Não consegui montar as vias para impressão. Tente de novo.");
+    });
+  }
+  function imprimirCanvases(cvs) {
+    var ifr = document.createElement("iframe");
+    ifr.setAttribute("aria-hidden", "true"); ifr.title = "Vias para impressão";
+    ifr.style.position = "fixed"; ifr.style.right = "0"; ifr.style.bottom = "0";
+    ifr.style.width = "1px"; ifr.style.height = "1px"; ifr.style.border = "0"; ifr.style.opacity = "0";
+    document.body.appendChild(ifr);
+    var d = ifr.contentWindow.document;
+    d.open();
+    d.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Vias dos pedidos</title><style>' +
+      '@page{size:A4 portrait;margin:8mm}html,body{margin:0;padding:0;background:#fff}' +
+      'img{display:block;width:100%;height:auto;page-break-after:always;break-after:page}' +
+      'img:last-child{page-break-after:auto;break-after:auto}</style></head><body>' +
+      cvs.map(function (cv) { return '<img src="' + cv.toDataURL("image/png") + '" alt="">'; }).join("") +
+      '</body></html>');
+    d.close();
+    var manda = function () {
+      try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) { alert("Não consegui abrir a janela de impressão."); }
+      setTimeout(function () { if (ifr.parentNode) ifr.remove(); }, 120000);
+    };
+    var imgs = d.images, falta = imgs.length;
+    if (!falta) return manda();
+    var conta = function () { if (--falta <= 0) manda(); };
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i].complete) conta();
+      else { imgs[i].onload = conta; imgs[i].onerror = conta; }
+    }
+  }
   function selecionados() { return Object.keys(st.selecao).filter(function (k) { return st.selecao[k]; }); }
   function barraLote() {
     var ids = selecionados(); var el = $("lote");
@@ -428,6 +502,7 @@
       '<div class="linha-i">' + campoData(p) + "</div>" +
       (foneDig(p.telefone) ? '<div class="linha-i">' + blocoFone(p) + "</div>" : "") +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
+      (jaImpressa(p) ? '<span class="av ok">✔ impressa</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
       '<div class="pes">' + pes + "</div></div>";
   }
@@ -447,7 +522,7 @@
       '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
       '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
       '<div class="ci">' + esc(resumo) + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
-      '<div class="linha-i">' + campoData(p) + blocoFone(p) + "</div>" +
+      '<div class="linha-i">' + campoData(p) + blocoFone(p) + (jaImpressa(p) ? '<span class="av ok">✔ impressa</span>' : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
       '<button class="btn sm" type="button" data-det>Mais informações</button>' +
@@ -469,6 +544,7 @@
   function render() {
     var l = visiveis();
     totalCanto(l);
+    botaoImprimir();
     if (st.det) desenhaDet();
     if (st.etapa) { document.body.classList.remove("quadro-on"); renderEtapa(l); return barraLote(); }
     Array.prototype.forEach.call(document.querySelectorAll(".modo"), function (b) { b.classList.toggle("on", b.getAttribute("data-modo") === st.modo); });
@@ -480,7 +556,7 @@
       var itens = itensHtml(p);
       var fone = (p.telefone || "").replace(/\D/g, "");
       return '<div class="ped ' + esc(p.status) + '" data-id="' + esc(p.id) + '"><div class="topo"><span class="cod">' + esc(p.codigo) + '</span><span class="cli">' + esc(p.cliente) + "</span>" +
-        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(foneBr(p.telefone)) + "</a>" : "") + (fone ? '<button class="cp" type="button" data-cp="' + esc(foneDig(p.telefone)) + '">copiar</button>' : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + '<span class="dt ' + classeData(p.data_entrega) + '">entrega: ' + esc(rotuloData(p.data_entrega, true)) + "</span>" + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (baixadas[p.id] ? '<span class="st pago">✔ via baixada</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
+        (fone ? '<a class="ver" target="_blank" rel="noopener" href="https://wa.me/55' + fone.replace(/^55/, "") + '">' + esc(foneBr(p.telefone)) + "</a>" : "") + (fone ? '<button class="cp" type="button" data-cp="' + esc(foneDig(p.telefone)) + '">copiar</button>' : "") + (p.cpf ? '<span class="mut">CPF ' + esc(cpfBr(p.cpf)) + "</span>" : "") + '<span class="mut">' + dataBr(p.criado_em) + '</span>' + '<span class="dt ' + classeData(p.data_entrega) + '">entrega: ' + esc(rotuloData(p.data_entrega, true)) + "</span>" + ((p.itens || []).some(function (x) { return x.acombinar; }) ? '<span class="st" style="background:#FDEDEB;color:#B3261E">tema personalizado</span>' : "") + '<span class="st" style="background:' + etapaCor(p.status) + ';color:#fff">' + esc(etapaNome(p.status)) + "</span>" + (jaImpressa(p) ? '<span class="st pago">✔ impressa</span>' : "") + '<b style="margin-left:auto">' + totalTxt(p) + "</b></div>" +
         '<div class="itens">' + itens + '</div><div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button></div></div>';
     }).join("");
   }
@@ -511,13 +587,18 @@
       linha("Pedido feito em", esc(dataBr(p.criado_em))) +
       linha("Quantidade", nmr(cartelas) + (cartelas === 1 ? " cartela" : " cartelas") + " · " + nmr(etiquetas) + " etiquetas") +
       linha("Total", "<b style='min-width:0;color:inherit;font-size:14px'>" + esc(totalTxt(p)) + "</b>") +
+      linha("Via", jaImpressa(p)
+        ? '<span class="av ok">✔ impressa ' + esc(dataBr(p.impressa_em)) + (p.impressa_por ? " · " + esc(p.impressa_por) : "") + "</span>" +
+          '<button class="cp" type="button" data-desimp>tirar a marca</button>'
+        : '<span class="mut">ainda não foi impressa</span>') +
       (p.movido_por ? linha("Última mudança", esc(p.movido_por) + " · " + esc(dataBr(p.atualizado_em))) : "") +
       (precisaArte(p) ? linha("Arte", '<span class="av perso">tem tema personalizado · precisa de arte</span>') : "") +
       (p.devolvido && p.motivo_devolucao ? linha("Voltou da expedição", '<span class="av">' + esc(p.motivo_devolucao) + "</span>") : "") +
       (p.nota ? linha("Observação", esc(p.nota)) : "") +
       "</div>" +
       '<div class="itens">' + itensHtml(p) + "</div>" +
-      '<div class="acoes"><button class="btn p" type="button" data-png>Baixar via</button>' +
+      '<div class="acoes"><button class="btn p" type="button" data-imp>Imprimir via</button>' +
+      '<button class="btn" type="button" data-png>Baixar via</button>' +
       (st.admin ? '<button class="btn apaga" type="button" data-del>Excluir pedido</button>' : "") +
       '<button class="btn" type="button" data-fecha style="margin-left:auto">Fechar</button></div></div>';
     $("det").innerHTML = html;
@@ -528,6 +609,7 @@
     if (cp) { e.preventDefault(); return copiar(cp.getAttribute("data-cp"), cp); }
     if (e.target.closest("[data-fecha]")) return fechaDet();
     if (e.target.id === "det") return fechaDet();
+    if (e.target.id === "btImprimir") return imprimirVias(pendentesProducao());
     var lt = e.target.closest("[data-lote]");
     if (lt) return moverVarios(selecionados(), lt.getAttribute("data-lote"));
     if (e.target.closest("[data-lote-limpa]")) { st.selecao = {}; return render(); }
@@ -551,7 +633,9 @@
     var mv = e.target.closest("[data-mv]");
     if (mv) return mover(p, mv.getAttribute("data-mv"));
     if (e.target.closest("[data-del]")) return excluir(p);
-    if (e.target.closest("[data-png]")) { baixarPng(p); baixadas[p.id] = 1; try { localStorage.setItem("etiquetas:baixadas", JSON.stringify(baixadas)); } catch (er) {} render(); }
+    if (e.target.closest("[data-imp]")) return imprimirVias([p]);
+    if (e.target.closest("[data-desimp]")) return desmarcarImpressa(p);
+    if (e.target.closest("[data-png]")) return baixarPng(p);
   });
   document.addEventListener("change", function (e) {
     var inp = e.target.closest("[data-data]"); if (!inp) return;
@@ -591,9 +675,14 @@
   function quebra(ctx, txt, max) { var pal = String(txt).split(/\s+/), lin = [], at = ""; pal.forEach(function (w) { var t = at ? at + " " + w : w; if (ctx.measureText(t).width > max && at) { lin.push(at); at = w; } else at = t; }); if (at) lin.push(at); return lin; }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function baixarPng(p) {
+    viaCanvas(p).then(function (cv) {
+      cv.toBlob(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "via-" + p.codigo + ".png"; document.body.appendChild(a); a.click(); a.remove(); }, "image/png");
+    });
+  }
+  function viaCanvas(p) {
     var itens = p.itens || [];
     var fontes = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 30px Inter"), document.fonts.load("700 30px Rowdies")]).catch(function () {}) : Promise.resolve();
-    Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(imgSeg(i.foto)); }))).then(function (r) {
+    return Promise.all([fontes].concat(itens.map(function (i) { return carregarImg(imgSeg(i.foto)); }))).then(function (r) {
       var imgs = r.slice(1), W = 1080, P = 48, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
       cv.width = W; ctx.font = "600 24px Inter, sans-serif";
       var alt = itens.map(function (i) { return Math.max(250, 70 + (4 + (i.obs ? quebra(ctx, "Obs: " + i.obs, 520).length : 0) + (i.descricao ? quebra(ctx, "Personalizado: " + i.descricao, 520).length : 0)) * 38 + 24); });
@@ -602,7 +691,8 @@
       ctx.fillStyle = "#fff"; ctx.font = "700 40px Rowdies, Inter, sans-serif"; ctx.fillText("VIA DO PEDIDO", P, 66); ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("Etiquetas escolares · vinil", P, 94);
       ctx.textAlign = "right"; ctx.font = "800 34px Inter, sans-serif"; ctx.fillText(p.codigo, W - P, 62); ctx.font = "600 22px Inter, sans-serif"; ctx.fillText("Vip Gráfica", W - P, 94); ctx.textAlign = "left";
       ctx.fillStyle = "#101C3F"; ctx.font = "800 30px Inter, sans-serif"; ctx.fillText("Cliente: " + p.cliente, P, 168);
-      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (p.telefone || "—") + (p.cpf ? "   ·   CPF: " + cpfBr(p.cpf) : ""), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
+      ctx.font = "600 24px Inter, sans-serif"; ctx.fillStyle = "#3B4560"; ctx.fillText("Telefone: " + (foneBr(p.telefone) || "—") + (p.cpf ? "   ·   CPF: " + cpfBr(p.cpf) : ""), P, 206); ctx.fillText("Data: " + dataBr(p.criado_em), P, 242);
+      if (p.data_entrega) { ctx.fillStyle = "#D6231A"; ctx.font = "800 26px Inter, sans-serif"; ctx.fillText("ENTREGA: " + diaBr(p.data_entrega), P + 440, 242); ctx.fillStyle = "#3B4560"; ctx.font = "600 24px Inter, sans-serif"; }
       var y = 296; ctx.fillStyle = "#E1E7F3"; ctx.fillRect(P, y - 30, W - 2 * P, 3);
       itens.forEach(function (i, k) {
         var h = alt[k], sub = i.preco * i.qtd, aCombinar = !!i.acombinar;
@@ -619,7 +709,7 @@
       });
       ctx.fillStyle = "#101C3F"; rr(ctx, P, y, W - 2 * P, 84, 16); ctx.fill(); ctx.fillStyle = "#fff"; ctx.font = "700 28px Inter, sans-serif"; ctx.fillText("TOTAL DO PEDIDO", P + 28, y + 52); ctx.textAlign = "right"; ctx.font = "800 40px Inter, sans-serif"; ctx.fillText(totalTxt(p), W - P - 28, y + 56); ctx.textAlign = "left";
       if (itens.some(function (i) { return i.acombinar; })) { y += 100; ctx.fillStyle = "#D6231A"; ctx.font = "700 24px Inter, sans-serif"; ctx.fillText("+ tema personalizado: valor a combinar com a cliente", P, y); y -= 100; }
-      cv.toBlob(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "via-" + p.codigo + ".png"; document.body.appendChild(a); a.click(); a.remove(); }, "image/png");
+      return cv;
     });
   }
 
