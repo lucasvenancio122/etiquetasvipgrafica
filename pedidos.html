@@ -54,8 +54,8 @@
   .coluna.alvo { outline:2px dashed var(--brand); outline-offset:-3px; background:#FDEDEB; }
   .col-cab { display:flex; align-items:center; gap:7px; font-weight:800; font-size:13.5px; margin:2px 4px 9px; }
   .col-bola { width:10px; height:10px; border-radius:50%; flex:none; }
-  .col-sub { margin:-5px 4px 9px; font-size:11.5px; color:var(--grey); font-weight:600; }
-  .totalzao { display:flex; gap:14px; flex-wrap:wrap; align-items:baseline; background:#fff; border:1px solid var(--line); border-left:4px solid var(--brand); border-radius:10px; padding:9px 14px; margin-bottom:12px; font-size:14px; }
+  .chip-total { font-size:13px; font-weight:700; color:var(--ink); background:#EBF0FA; border-radius:999px; padding:5px 12px; white-space:nowrap; }
+  .chip-total:empty { display:none; }
   .col-n { margin-left:auto; background:#fff; border-radius:999px; padding:1px 8px; font-size:12px; color:var(--grey); }
   .cartao { background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 10px; margin-bottom:8px; cursor:grab; box-shadow:0 1px 2px rgba(16,28,63,.06); }
   .cartao:active { cursor:grabbing; }
@@ -116,7 +116,7 @@
 </div>
 
 <div id="telaApp" class="oculta">
-  <header><h1>Pedidos de etiquetas</h1><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
+  <header><h1>Pedidos de etiquetas</h1><span id="totalTopo" class="chip-total"></span><span class="mut" id="quem"></span><button class="btn" id="atualizar" type="button">Atualizar</button><button class="btn" id="sair" type="button">Sair</button></header>
   <div class="wrap">
     <div class="barra"><input id="busca" placeholder="Buscar pelo código, nome do cliente ou telefone…"><div class="modos" id="modos"><button class="modo on" type="button" data-modo="quadro">Quadro</button><button class="modo" type="button" data-modo="lista">Lista</button></div></div>
     <div id="lista"></div>
@@ -290,19 +290,16 @@
     return '<div class="cartao' + (p.devolvido ? " volta" : "") + (st.selecao[p.id] ? " marcado" : "") + '" draggable="true" data-id="' + esc(p.id) + '">' +
       '<div class="c1"><label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label><span class="cd">' + esc(p.codigo) + '</span><span class="vl">' + totalTxt(p) + "</span></div>" +
       '<div class="cn">' + esc(p.cliente) + "</div>" +
-      '<div class="ci">' + resumo + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
+      '<div class="ci">' + resumo + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? "<br>CPF: <b>" + esc(cpfBr(p.cpf)) + "</b>" : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") +
       '<div class="pes">' + pes + "</div></div>";
   }
   function renderQuadro(l) {
     var dica = window.matchMedia && window.matchMedia("(max-width:860px)").matches ? '<p class="mut" style="font-size:12px;margin:0 0 8px">Arraste para o lado para ver as outras etapas.</p>' : "";
-    var naFila = l.filter(function (p) { return p.status !== "entregue"; });
-    var topo = l.length ? '<div class="totalzao"><span><b>Em aberto:</b> ' + esc(resumoConta(naFila)) + "</span>" + (l.length !== naFila.length ? '<span class="mut">Tudo, com os entregues: ' + esc(resumoConta(l)) + "</span>" : "") + "</div>" : "";
-    $("lista").innerHTML = dica + topo + '<div class="quadro">' + ETAPAS.map(function (et) {
+    $("lista").innerHTML = dica + '<div class="quadro">' + ETAPAS.map(function (et) {
       var dela = l.filter(function (p) { return p.status === et[0]; });
       return '<section class="coluna" data-col="' + et[0] + '"><div class="col-cab"><span class="col-bola" style="background:' + et[2] + '"></span>' + esc(et[1]) + '<span class="col-n">' + dela.length + "</span></div>" +
-        (dela.length ? '<div class="col-sub">' + esc(resumoConta(dela, true)) + "</div>" : "") +
         (dela.length ? dela.map(cartao).join("") : '<p class="mut" style="text-align:center;padding:10px 0;font-size:12.5px">—</p>') + "</section>";
     }).join("") + "</div>";
   }
@@ -313,7 +310,7 @@
     return '<div class="linha-ped' + (p.devolvido ? " volta" : "") + '" data-id="' + esc(p.id) + '">' +
       '<label class="sel"><input type="checkbox" data-sel' + (st.selecao[p.id] ? " checked" : "") + '></label>' +
       '<div class="info"><div class="cd">' + esc(p.codigo) + ' · <span class="cn">' + esc(p.cliente) + "</span></div>" +
-      '<div class="ci">' + esc(resumo) + " · " + nmr(n) + (n === 1 ? " cartela" : " cartelas") + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
+      '<div class="ci">' + esc(resumo) + ((p.status === "expedicao" || p.status === "entregue") && p.cpf ? " · CPF " + esc(cpfBr(p.cpf)) : "") + "</div>" +
       (precisaArte(p) ? '<span class="av perso">tema personalizado · precisa de arte</span>' : "") +
       (p.devolvido && p.motivo_devolucao ? '<span class="av">voltou: ' + esc(p.motivo_devolucao) + "</span>" : "") + "</div>" +
       '<button class="btn sm" type="button" data-png>Via</button>' +
@@ -324,11 +321,16 @@
     var dela = l.filter(function (p) { return p.status === st.etapa; });
     $("lista").innerHTML = '<div class="etapa-cab"><span class="col-bola" style="background:' + etapaCor(st.etapa) + '"></span><h2>' + esc(etapaNome(st.etapa)) + '</h2><span class="col-n">' + dela.length + '</span>' +
       (dela.length > 1 ? '<button class="btn sm" type="button" id="marcaTodos" style="margin-left:auto">Marcar todos</button>' : "") + "</div>" +
-      (dela.length ? '<div class="totalzao"><span><b>Para fazer:</b> ' + esc(resumoConta(dela)) + "</span></div>" : "") +
       (dela.length ? dela.map(linhaPed).join("") : '<div class="vazio">Nenhum pedido em ' + esc(etapaNome(st.etapa)) + " agora.</div>");
+  }
+  function totalCanto(l) {
+    var alvo = st.etapa ? l.filter(function (p) { return p.status === st.etapa; }) : l.filter(function (p) { return p.status !== "entregue"; });
+    var c = conta(alvo);
+    $("totalTopo").textContent = c.cartelas ? nmr(c.cartelas) + (c.cartelas === 1 ? " cartela" : " cartelas") : "";
   }
   function render() {
     var l = visiveis();
+    totalCanto(l);
     if (st.etapa) { document.body.classList.remove("quadro-on"); renderEtapa(l); return barraLote(); }
     Array.prototype.forEach.call(document.querySelectorAll(".modo"), function (b) { b.classList.toggle("on", b.getAttribute("data-modo") === st.modo); });
     document.body.classList.toggle("quadro-on", st.modo === "quadro");
